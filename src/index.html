@@ -495,7 +495,7 @@ function rowEl(sec,si,L,li){
     const unsaved = !!cur && !L.alts.includes(cur);
 
     if(unsaved){
-      const c = el("button","vc on"); c.textContent = "未存· " + short(cur);
+      const c = el("button","vc on"); c.textContent = "未存 · " + short(cur);
       c.title = "还没存下来的新写法：" + cur + "\n切到别的版本时会自动帮你存住";
       vw.appendChild(c);
     }
