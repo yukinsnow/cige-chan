@@ -75,9 +75,9 @@ main{max-width:1080px;margin:0 auto;padding:26px 20px 160px}
 .pat-edit{width:120px;font-size:12px;background:var(--panel2);border:1px solid var(--accent);border-radius:7px;padding:3px 7px;outline:none}
 
 .wrap{position:relative;flex:1;min-width:0}
-.grid{display:flex;align-items:center;gap:var(--ggap);flex-wrap:wrap}
-.grp{display:flex;gap:var(--gap);position:relative}
-.grp.cur::after{content:"";position:absolute;left:0;right:0;bottom:-5px;height:2px;background:var(--accent);opacity:.55;border-radius:2px}
+.grid{display:flex;align-items:center;align-content:center;gap:var(--ggap);flex-wrap:wrap;row-gap:calc(var(--gap) + 6px)}
+.grp{display:flex;gap:var(--gap);position:relative;flex-wrap:wrap;row-gap:calc(var(--gap) + 6px)}
+.grp.cur::after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:2px;background:var(--accent);opacity:.55;border-radius:2px}
 .cell{position:relative;width:var(--cell);height:var(--cell);border:1px solid var(--cellbd);background:var(--cellbg);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:calc(var(--cell)*.62);color:var(--fill);flex:none;transition:border-color .12s,background .12s;font-style:normal}
 .cell::before{content:"";position:absolute;inset:0;background:
   linear-gradient(to right,transparent calc(50% - .5px),var(--cellbd) calc(50% - .5px),var(--cellbd) calc(50% + .5px),transparent calc(50% + .5px)),
