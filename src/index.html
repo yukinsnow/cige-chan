@@ -38,11 +38,15 @@ html.has-bg .note{border-bottom-color:var(--line-t)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);-webkit-font-smoothing:antialiased}
 button,input{font-family:inherit;color:inherit}
-button{background:transparent;border:1px solid var(--line);color:var(--fg);border-radius:7px;padding:5px 10px;cursor:pointer;font-size:13px;line-height:1.4;transition:.12s}
+button{background:transparent;border:1px solid var(--line);color:var(--fg);border-radius:7px;padding:5px 10px;cursor:pointer;font-size:13px;line-height:1.4;transition:.12s;-webkit-user-select:none;user-select:none}
 button:hover{border-color:var(--accent);color:var(--accent)}
 button.pri{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:600}
 button.pri:hover{filter:brightness(1.08);color:var(--bg)}
 button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+
+/* 编辑器里的显示内容(格子/行号/词格数/字数/各类标签)都不应该被浏览器原生选中 为了避免手滑/误操作 需要将这部分的user-select关掉*/
+.ln,.pat,.cnt,.tools,.grid,.cell,.ovf,.vlab,.vwrap,.secmeta,.tag,.sectools,.addline{
+  -webkit-user-select:none;user-select:none}
 
 /* ---------- header ---------- */
 header{position:sticky;top:0;z-index:30;background:var(--panel);border-bottom:1px solid var(--line)}
@@ -86,13 +90,20 @@ main{max-width:1080px;margin:0 auto;padding:26px 20px 160px}
 .cell.filled::before{opacity:0}
 .cell.caret::after{content:"";position:absolute;left:2px;top:10%;bottom:10%;width:2px;background:var(--accent);animation:bl 1.05s steps(1) infinite}
 .cell.caret.end::after{left:auto;right:2px}
+/* 选区用"格子高亮"表示：由 paintSel() 按 selectionStart/End 给对应格子加 .sel，
+   高亮永远跟着格子走，折多少行都对得上（详见下方 .io::selection 说明）。
+   has-bg 时 .cell 背景更透，这里用更高优先级的选择器盖过它。 */
+.cell.sel,html.has-bg .cell.sel{background:var(--accent-soft);border-color:var(--accent)}
 @keyframes bl{50%{opacity:0}}
 .ovf{color:var(--ovf);font-size:calc(var(--cell)*.55);letter-spacing:2px;border-bottom:2px wavy var(--ovf);border-bottom-style:dashed;align-self:center}
 
 .io{position:absolute;inset:0;width:100%;height:100%;background:transparent;border:none;outline:none;color:transparent;caret-color:transparent;
   font-size:calc(var(--cell)*.62);letter-spacing:calc(var(--cell) + var(--gap) - var(--cell)*.62);padding-left:calc(var(--cell)*.19);z-index:2;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;}
-.io::selection{background:var(--accent-soft)}
+/* 透明输入框是单行的，浏览器原生选区高亮会沿这条单行画出来、和折行后的格子对不上，
+   表现为一条飘忽的斜带子。这里把原生高亮设为透明，改由 paintSel() 把选区画到对应的
+   格子上（.cell.sel），高亮就永远跟着格子走。 */
+.io::selection{background:transparent}
 .comp{position:absolute;top:calc(100% - 2px);z-index:5;background:var(--accent);color:var(--bg);font-size:13px;padding:1px 7px;border-radius:5px;white-space:nowrap;display:none}
 
 .cnt{flex:none;width:52px;text-align:right;font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums}
@@ -556,15 +567,22 @@ function rowEl(sec,si,L,li){
     L.t = clean;
     paint(R,L); buildVers(); mark(io.selectionStart); stats(); save();
   }
-  function mark(p){ curPos = p; focusRef = {si,li,pos:p}; caret(R,L,p); }
+  function mark(p){ curPos = p; focusRef = {si,li,pos:p}; caret(R,L,p); paintSel(R); }
   R._mark = mark;   // 供 redrawRow / restoreFocus 在重建行后同步光标位置
 
   io.addEventListener("focus",()=>{ R.classList.add("active"); mark(io.selectionStart); });
   io.addEventListener("blur",()=>{
     if(RT(L.t) !== L.t){ L.t = RT(L.t); io.value = L.t; paint(R,L); buildVers(); stats(); save(); }
-    R.classList.remove("active"); R.querySelectorAll(".cell").forEach(c=>c.classList.remove("caret","end")); R.querySelectorAll(".grp").forEach(g=>g.classList.remove("cur")); });
+    R.classList.remove("active"); R.querySelectorAll(".cell").forEach(c=>c.classList.remove("caret","end","sel")); R.querySelectorAll(".grp").forEach(g=>g.classList.remove("cur")); });
   io.addEventListener("keyup",()=>mark(io.selectionStart));
+  // 拖选、全选(Ctrl/⌘+A)、Shift+方向键都会触发 select，这里把选区重画到格子上
+  io.addEventListener("select",()=>paintSel(R));
   io.addEventListener("click",e=>{
+    // 拖动鼠标选出了一段范围（selectionStart≠End）时，别把它当普通点击去收拢光标——
+    // 保留这段选区并按格子高亮出来。光标画在拖动的那一端。只有真正的单击才定位光标。
+    if(io.selectionStart !== io.selectionEnd){
+      mark(io.selectionDirection === "backward" ? io.selectionStart : io.selectionEnd); return;
+    }
     // 点/触摸格子内任意位置都定位到这一格本身（不再按左右半格判断"上一格/下一格"，
     // 半格判断在鼠标下没问题，但在触摸屏上误差大，容易点右半边却跳到下一格）。
     // 词格很长时会自动换行成好几排，这里必须先按纵向（行）匹配，行内再比横向距离，
@@ -663,6 +681,17 @@ function caret(R,L,pos){
   const grps = R.querySelectorAll(".grp");
   const gi = groupAt(L, Math.min(pos, cells.length)).gi;
   if(grps[gi]) grps[gi].classList.add("cur");
+}
+
+/* 把输入框里的选区映射成"格子高亮"。透明输入框是单行的，原生选区高亮会沿单行画、
+   和折行后的格子对不上；这里按 selectionStart/End 给区间内的格子加 .sel，
+   高亮就永远跟着格子走。选区为空（普通光标）时什么都不高亮。 */
+function paintSel(R){
+  const io = R.querySelector(".io");
+  const cells = R.querySelectorAll(".cell");
+  const s = Math.min(io.selectionStart, io.selectionEnd);
+  const e = Math.max(io.selectionStart, io.selectionEnd);
+  cells.forEach((c,i)=> c.classList.toggle("sel", e > s && i >= s && i < e));
 }
 
 function redrawRow(si,li,pos){
