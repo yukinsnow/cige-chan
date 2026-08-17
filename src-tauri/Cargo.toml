@@ -1,6 +1,6 @@
 [package]
 name = "cige-chan"
-version = "2.0.1"
+version = "2.0.2"
 description = "词格酱 · 中文歌词写作台"
 authors = ["yukinsnow"]
 edition = "2021"
