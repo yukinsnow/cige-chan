@@ -29,6 +29,26 @@ html[data-theme="paper"]{
   --cellbd:#c8b696; --cellbg:#fffdf7; --fill:#241f19; --ovf:#c0392b;
   --panel-t:rgba(250,246,236,.84); --cell-t:rgba(255,253,247,.62); --line-t:rgba(0,0,0,.18);
 }
+/* ---------- 主题色（换色调） ----------
+   只覆盖 --accent / --accent-soft 两个变量，明暗两套底色的结构不动。
+   data-accent 由 state.accent 驱动，"auto"（默认）不设属性、走上面的原版配色。
+   每个色都按 dark / paper 各调了一档明度，保证对比度够。 */
+html[data-accent="blue"]{ --accent:#5ab4d8; --accent-soft:rgba(90,180,216,.16); }
+html[data-theme="paper"][data-accent="blue"]{ --accent:#3389D1; --accent-soft:rgba(51,137,209,.12); }
+html[data-accent="green"]{ --accent:#7fbf8e; --accent-soft:rgba(127,191,142,.16); }
+html[data-theme="paper"][data-accent="green"]{ --accent:#3e7d4f; --accent-soft:rgba(62,125,79,.12); }
+html[data-accent="violet"]{ --accent:#b39ddb; --accent-soft:rgba(179,157,219,.16); }
+html[data-theme="paper"][data-accent="violet"]{ --accent:#6a4fa3; --accent-soft:rgba(106,79,163,.12); }
+html[data-accent="rose"]{ --accent:#e08a97; --accent-soft:rgba(224,138,151,.16); }
+html[data-theme="paper"][data-accent="rose"]{ --accent:#b5485d; --accent-soft:rgba(181,72,93,.12); }
+html[data-accent="cyan"]{ --accent:#6fd6c8; --accent-soft:rgba(111,214,200,.16); }
+html[data-theme="paper"][data-accent="cyan"]{ --accent:#2a8f85; --accent-soft:rgba(42,143,133,.12); }
+html[data-accent="orange"]{ --accent:#f0a35e; --accent-soft:rgba(240,163,94,.16); }
+html[data-theme="paper"][data-accent="orange"]{ --accent:#c96f1f; --accent-soft:rgba(201,111,31,.12); }
+html[data-accent="slate"]{ --accent:#9aa7b5; --accent-soft:rgba(154,167,181,.16); }
+html[data-theme="paper"][data-accent="slate"]{ --accent:#5a6673; --accent-soft:rgba(90,102,115,.12); }
+html[data-accent="red"]{ --accent:#e06655; --accent-soft:rgba(224,102,85,.16); }
+html[data-theme="paper"][data-accent="red"]{ --accent:#b03a2e; --accent-soft:rgba(176,58,46,.12); }
 
 /* ---------- 自定义背景 ---------- */
 #bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
@@ -229,6 +249,42 @@ pre{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padd
 #drop.show{display:flex}
 #toast{position:fixed;bottom:calc(56px + var(--sab));left:50%;transform:translateX(-50%);background:var(--accent);color:var(--bg);padding:7px 16px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;transition:.2s;pointer-events:none;z-index:70}
 #toast.show{opacity:1}
+
+/* ---------- AI 填词面板 ---------- */
+#aip{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:none;align-items:center;justify-content:center;padding:calc(20px + var(--sat)) 20px calc(20px + var(--sab))}
+#aip.show{display:flex}
+#aip .card{max-width:560px}
+.airow{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.airow label{font-size:12px;color:var(--dim);letter-spacing:.5px}
+.airow input[type="text"],.airow input[type="password"],.airow textarea{
+  background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;
+  font-size:13px;color:var(--fg);outline:none;font-family:inherit;resize:vertical}
+.airow input:focus,.airow textarea:focus{border-color:var(--accent)}
+.airow textarea{line-height:1.6}
+.aihint{font-size:11px;color:var(--dim)}
+.aiadv{flex-direction:row;align-items:center;gap:10px;flex-wrap:wrap}
+.aiadv label{flex:none}
+.aiadv input[type="range"]{flex:1;min-width:120px;accent-color:var(--accent)}
+.aiadv select{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;
+  font-size:13px;color:var(--fg);outline:none;font-family:inherit;max-width:240px}
+.aiadv select:focus{border-color:var(--accent)}
+.aiadv b{color:var(--accent);font-weight:600;font-variant-numeric:tabular-nums;min-width:44px;text-align:right}
+.aibtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.aibtns .stop{border-color:var(--ovf);color:var(--ovf);font-weight:600}
+.aibtns .stop:hover{border-color:var(--ovf);color:var(--ovf);background:rgba(229,106,74,.12)}
+/* 顶栏 AI 按钮：运行中亮起呼吸点，提示后台还有任务在跑 */
+#aibtn.ai-running{border-color:var(--accent);color:var(--accent);position:relative;padding-left:24px}
+#aibtn.ai-running::before{content:"";position:absolute;left:9px;top:50%;transform:translateY(-50%);
+  width:8px;height:8px;border-radius:50%;background:var(--accent);animation:aiPulse 1.2s ease-in-out infinite}
+@keyframes aiPulse{0%,100%{opacity:.35;transform:translateY(-50%) scale(.8)}50%{opacity:1;transform:translateY(-50%) scale(1.15)}}
+.aiprog{display:flex;align-items:center;gap:10px;margin-top:12px}
+.aibar{flex:1;height:8px;border-radius:5px;background:var(--panel2);border:1px solid var(--line);overflow:hidden}
+#aifillbar{height:100%;width:0;background:var(--accent);border-radius:5px;transition:width .25s}
+.aiptext{font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums;flex:none;max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ailog{margin-top:14px;max-height:180px;overflow:auto;background:var(--panel2);border:1px solid var(--line);
+  border-radius:8px;padding:8px 10px;font-size:11.5px;line-height:1.7;color:var(--dim);
+  font-family:ui-monospace,monospace;display:flex;flex-direction:column;gap:2px}
+.ailog:empty{display:none}
 </style>
 </head>
 <body>
@@ -264,6 +320,7 @@ pre{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padd
     </div>
     <div class="grow"></div>
     <button id="reflow" data-i18n="btnReflow" data-i18n-title="btnReflowTitle" title="把每句超出的字顺移到下一句">整理溢出</button>
+    <button id="aibtn" data-i18n="aiBtn" data-i18n-title="aiBtnTitle" title="接入 OpenAI 兼容接口（中转站），按词格自动填词">AI 填词</button>
     <button id="small" data-i18n="btnSmall">A−</button><button id="big" data-i18n="btnBig">A+</button>
     <button id="bgb" data-i18n="btnBg">背景</button>
     <div class="menuwrap">
@@ -410,6 +467,10 @@ XXXX XXXX</pre>
     <button class="pre" data-th="paper" data-i18n="bgThemePaper">稿纸</button>
   </div>
 
+  <h4 data-i18n="accentH4">主题色</h4>
+  <div class="bgrow" id="accrow"></div>
+  <p class="tip" data-i18n="accentTip">只换强调色，底色明暗不受影响。</p>
+
   <h4 data-i18n="bgCustomH4">换成自己的</h4>
   <div class="bgrow">
     <button id="bgpick" data-i18n="bgPick">选一张图片…</button>
@@ -430,10 +491,53 @@ XXXX XXXX</pre>
   <p style="text-align:right;margin-top:18px"><button class="pri" id="bgok" data-i18n="bgOk">完成</button></p>
 </div></div>
 <div id="drop" data-i18n="dropText">松手即可导入 .txt / .json，或把图片拖进来当背景</div>
+<div id="aip"><div class="card">
+  <h3 data-i18n="aiTitle">AI 填词</h3>
+  <p data-i18n="aiIntro">接入任意 OpenAI 兼容接口（各类中转站），按词格逐句自动填词。所有设置只存在本机浏览器。</p>
+  <p class="aihint" data-i18n="aiDisclaimer" style="margin:-6px 0 12px"></p>
+
+  <div class="airow"><label data-i18n="aiUrlLabel">接口地址 BASE_URL</label>
+    <input type="text" id="aiurl" placeholder="https://api.example.com/v1" spellcheck="false" autocomplete="off">
+    <span class="aihint" data-i18n="aiUrlHint">结尾的 /v1 会自动补</span></div>
+  <div class="airow"><label data-i18n="aiKeyLabel">API Key</label>
+    <input type="password" id="aikey" placeholder="sk-…" spellcheck="false" autocomplete="off">
+    <span class="aihint" data-i18n="aiKeyHint">只存本机浏览器</span></div>
+  <div class="airow"><label data-i18n="aiModelLabel">模型名称 MODEL</label>
+    <input type="text" id="aimodel" placeholder="gpt-4o-mini / deepseek-chat / …" spellcheck="false" autocomplete="off">
+    <span class="aihint" data-i18n="aiModelHint">以中转站的模型列表为准</span></div>
+
+  <div class="airow"><label data-i18n="aiStyleLabel">风格提示词</label>
+    <textarea id="aistyle" rows="3" data-i18n-placeholder="aiStylePh" placeholder="例：写一首夏夜校园风，句尾尽量押 ang 韵…"></textarea>
+    <span class="aihint" data-i18n="aiStyleHint">每次填词都会带上</span></div>
+
+  <div class="airow aiadv"><label data-i18n="aiScopeLabel">处理范围</label>
+    <select id="aiscope"></select>
+    <span class="aihint" id="aipending">还有 0 句待填</span></div>
+
+  <h4 data-i18n="aiAdvH4">高级</h4>
+  <div class="airow aiadv"><label data-i18n="aiMaxTokensLabel">最大回复 tokens</label>
+    <input type="range" id="aimax" min="500" max="8000" step="100" value="3000"> <b id="aimaxv">3000</b></div>
+  <div class="airow aiadv"><label data-i18n="aiTemperatureLabel">创造性 temperature</label>
+    <input type="range" id="aitemp" min="0" max="2" step="0.1" value="0.9"> <b id="aitempv">0.9</b></div>
+
+  <div class="aibtns">
+    <button class="pri" id="aigo" data-i18n="aiGo">整首填词</button>
+    <button id="aichk" data-i18n="aiCheckBtn">检查全篇</button>
+    <button class="stop" id="aistop" data-i18n="aiStop" style="display:none">停止</button>
+    <button id="aitest" data-i18n="aiTestBtn">测试连接</button>
+    <button id="aiclose" data-i18n="aiClose">完成</button>
+  </div>
+  <div id="aiprog" class="aiprog" style="display:none">
+    <div class="aibar"><div id="aifillbar"></div></div>
+    <span id="aiprogtext" class="aiptext"></span>
+  </div>
+  <div id="ailog" class="ailog"></div>
+</div></div>
 <div id="toast"></div>
 <input type="file" id="file" accept=".txt,.json,.md" style="display:none">
 <input type="file" id="filemidi" accept=".mid,.midi" style="display:none">
 <script src="i18n.js"></script>
+<script src="ai.js"></script>
 <script>
 "use strict";
 const $ = s => document.querySelector(s);
@@ -444,7 +548,7 @@ const SAMPLE = [
   {name:"Verse", lines:[{g:[4,3],t:""},{g:[3,4],t:""},{g:[2,5],t:""},{g:[4,4],t:""}]},
   {name:"Chorus",  lines:[{g:[5,3],t:""},{g:[4,4],t:""},{g:[5,3],t:""},{g:[6],t:""}]}
 ];
-let state = { title:"未命名歌曲", sections:JSON.parse(JSON.stringify(SAMPLE)), cell:44, theme:"dark", lang:"zh",
+let state = { title:"未命名歌曲", sections:JSON.parse(JSON.stringify(SAMPLE)), cell:44, theme:"dark", lang:"zh", accent:"auto",
                exp:{alts:false,note:false}, bg:{mode:"none", color:"#1a1614", dim:.55, blur:0} };
 let focusRef = null;      // {si,li,pos}
 let composing = false;
@@ -1518,6 +1622,47 @@ function setCell(v){ state.cell = Math.max(28,Math.min(72,v)); document.document
 let bgImg = "";
 try{ bgImg = localStorage.getItem("cige.bg") || ""; }catch(e){}
 
+/* ---------- 主题色（换色调） ---------- */
+const ACCENTS = [
+  { id:"auto",   dark:"#e0a83f", paper:"#a8632a" },   // 原版配色
+  { id:"blue",   dark:"#5ab4d8", paper:"#3389D1" },
+  { id:"green",  dark:"#7fbf8e", paper:"#3e7d4f" },
+  { id:"violet", dark:"#b39ddb", paper:"#6a4fa3" },
+  { id:"rose",   dark:"#e08a97", paper:"#b5485d" },
+  { id:"cyan",   dark:"#6fd6c8", paper:"#2a8f85" },
+  { id:"orange", dark:"#f0a35e", paper:"#c96f1f" },
+  { id:"slate",  dark:"#9aa7b5", paper:"#5a6673" },
+  { id:"red",    dark:"#e06655", paper:"#b03a2e" },
+];
+
+function applyAccent(){
+  const a = state.accent;
+  if(a && a !== "auto" && ACCENTS.some(x => x.id === a)) document.documentElement.dataset.accent = a;
+  else delete document.documentElement.dataset.accent;   // auto：走主题自带配色
+}
+
+function syncAccentPanel(){
+  const box = $("#accrow");
+  if(!box.children.length){
+    ACCENTS.forEach(a=>{
+      const b = el("button","swatch");
+      b.title = t("accentName", a.id);
+      b.dataset.acc = a.id;
+      b.onclick = ()=>{ state.accent = a.id; applyAccent(); syncAccentPanel(); save(); };
+      box.appendChild(b);
+    });
+  }
+  const isPaper = state.theme === "paper";   // dark/paper 各一档，底色换档时跟着重刷
+  box.querySelectorAll(".swatch").forEach(b=>{
+    const a = ACCENTS.find(x => x.id === (b.dataset.acc || "auto"));
+    b.style.background = isPaper ? a.paper : a.dark;
+    b.classList.toggle("on", (b.dataset.acc || "auto") === (state.accent || "auto"));
+    b.style.outline = b.classList.contains("on") ? "2px solid var(--accent)" : "";
+    b.style.outlineOffset = "2px";
+  });
+}
+
+
 function saveBg(){
   try{
     if(bgImg) localStorage.setItem("cige.bg", bgImg);
@@ -1602,11 +1747,11 @@ function loadBgImage(file){
   fr.readAsDataURL(file);
 }
 
-$("#bgb").onclick = ()=>{ syncBgPanel(); $("#bgp").classList.add("show"); };
+$("#bgb").onclick = ()=>{ syncBgPanel(); syncAccentPanel(); $("#bgp").classList.add("show"); };
 $("#bgok").onclick = ()=>$("#bgp").classList.remove("show");
 $("#bgp").onclick = e=>{ if(e.target.id === "bgp") $("#bgp").classList.remove("show"); };
 $("#bgp").querySelectorAll(".pre").forEach(p=>{
-  p.onclick = ()=>{ state.theme = p.dataset.th; applyBg(); syncBgPanel(); save(); };
+  p.onclick = ()=>{ state.theme = p.dataset.th; applyBg(); syncBgPanel(); syncAccentPanel(); save(); };   // 底色换档时刷新色板（dark/paper 各一档颜色）
 });
 $("#bgcolor").oninput = e=>setBgColor(e.target.value);
 $("#bgpick").onclick = ()=>pick("image/*");
@@ -1630,7 +1775,7 @@ $("#new").onclick = ()=>{ if(!confirm(t("confirmNew"))) return;
 $("#helpb").onclick = ()=>$("#help").classList.add("show");
 $("#helpClose").onclick = ()=>$("#help").classList.remove("show");
 $("#help").onclick = e=>{ if(e.target.id === "help") $("#help").classList.remove("show"); };
-addEventListener("keydown",e=>{ if(e.key === "Escape"){ $("#help").classList.remove("show"); $("#exp").classList.remove("show"); $("#bgp").classList.remove("show"); closeAllMenus(); } });
+addEventListener("keydown",e=>{ if(e.key === "Escape"){ $("#help").classList.remove("show"); $("#exp").classList.remove("show"); $("#bgp").classList.remove("show"); if(window.aiClosePanel) aiClosePanel(); closeAllMenus(); } });
 $("#reflow").onclick = ()=>{
   let moved = 0;
   for(const sec of state.sections){
@@ -1715,13 +1860,17 @@ if(!I18N[state.lang]) state.lang = "zh";
 // 没动过字号（还是出厂默认 44）又赶上窄屏，就先给个更适配的默认值；已经自己调过大小的
 // 不去动它——A−/A+ 存下来的选择要一直尊重。
 if(state.cell === 44 && innerWidth < 480) state.cell = 32;
+if(!state.accent || !["auto","blue","green","violet","rose","cyan","orange","slate","red"].includes(state.accent)) state.accent = "auto";
 applyBg();
+applyAccent();
 // 顶栏和帮助面板里的图标直接复用 <link rel="icon"> 那份 base64，不再多存一份
 { const ico = document.querySelector('link[rel="icon"]');
   if(ico) document.querySelectorAll("img.logo").forEach(im=>{ im.src = ico.href; }); }
 applyI18n();
 $("#title").value = state.title;
 setCell(state.cell);
+aiBind();          // AI 填词面板（ai.js）：绑定事件、面板显隐、按钮
+aiInjectHelp();    // 帮助面板末尾追加 AI 使用说明
 render();
 </script>
 </body>
