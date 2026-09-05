@@ -1,0 +1,279 @@
+:root{
+  --cell:44px; --gap:6px; --ggap:22px;
+  --font: "PingFang SC","Hiragino Sans GB","Microsoft YaHei","Source Han Sans SC","Noto Sans CJK SC",system-ui,sans-serif;
+  /* 安全区（刘海 / 状态栏 / 底部手势条）。桌面与普通浏览器下 env() 全为 0，calc 归零，零影响；
+     移动端（尤其安卓 Tauri 需配合 <meta viewport-fit=cover>）撑开对应内边距，避免顶栏被状态栏盖住。
+     统一走这几个变量，将来若安卓 WebView 的 env() 不给状态栏高度，只改这里即可（例如由原生注入）。 */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+html[data-theme="dark"]{
+  --bg:#131110; --panel:#1c1917; --panel2:#232019; --line:#302b25;
+  --fg:#eae4da; --dim:#8d8378; --accent:#e0a83f; --accent-soft:rgba(224,168,63,.16);
+  --cellbd:#3b352e; --cellbg:#191614; --fill:#f6f0e5; --ovf:#e56a4a;
+  --panel-t:rgba(28,25,23,.84); --cell-t:rgba(20,17,15,.5); --line-t:rgba(255,255,255,.16);
+}
+html[data-theme="paper"]{
+  --bg:#e9e2d3; --panel:#faf6ec; --panel2:#f3ece0; --line:#dcd2bd;
+  --fg:#2f2a24; --dim:#8b8072; --accent:#a8632a; --accent-soft:rgba(168,99,42,.12);
+  --cellbd:#c8b696; --cellbg:#fffdf7; --fill:#241f19; --ovf:#c0392b;
+  --panel-t:rgba(250,246,236,.84); --cell-t:rgba(255,253,247,.62); --line-t:rgba(0,0,0,.18);
+}
+/* ---------- 主题色（换色调） ----------
+   只覆盖 --accent / --accent-soft 两个变量，明暗两套底色的结构不动。
+   data-accent 由 state.accent 驱动，"auto"（默认）不设属性、走上面的原版配色。
+   每个色都按 dark / paper 各调了一档明度，保证对比度够。 */
+html[data-accent="blue"]{ --accent:#5ab4d8; --accent-soft:rgba(90,180,216,.16); }
+html[data-theme="paper"][data-accent="blue"]{ --accent:#3389D1; --accent-soft:rgba(51,137,209,.12); }
+html[data-accent="green"]{ --accent:#7fbf8e; --accent-soft:rgba(127,191,142,.16); }
+html[data-theme="paper"][data-accent="green"]{ --accent:#3e7d4f; --accent-soft:rgba(62,125,79,.12); }
+html[data-accent="violet"]{ --accent:#b39ddb; --accent-soft:rgba(179,157,219,.16); }
+html[data-theme="paper"][data-accent="violet"]{ --accent:#6a4fa3; --accent-soft:rgba(106,79,163,.12); }
+html[data-accent="rose"]{ --accent:#e08a97; --accent-soft:rgba(224,138,151,.16); }
+html[data-theme="paper"][data-accent="rose"]{ --accent:#b5485d; --accent-soft:rgba(181,72,93,.12); }
+html[data-accent="cyan"]{ --accent:#6fd6c8; --accent-soft:rgba(111,214,200,.16); }
+html[data-theme="paper"][data-accent="cyan"]{ --accent:#2a8f85; --accent-soft:rgba(42,143,133,.12); }
+html[data-accent="orange"]{ --accent:#f0a35e; --accent-soft:rgba(240,163,94,.16); }
+html[data-theme="paper"][data-accent="orange"]{ --accent:#c96f1f; --accent-soft:rgba(201,111,31,.12); }
+html[data-accent="slate"]{ --accent:#9aa7b5; --accent-soft:rgba(154,167,181,.16); }
+html[data-theme="paper"][data-accent="slate"]{ --accent:#5a6673; --accent-soft:rgba(90,102,115,.12); }
+html[data-accent="red"]{ --accent:#e06655; --accent-soft:rgba(224,102,85,.16); }
+html[data-theme="paper"][data-accent="red"]{ --accent:#b03a2e; --accent-soft:rgba(176,58,46,.12); }
+
+/* ---------- 自定义背景 ---------- */
+#bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+#bgimg{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;transition:filter .2s}
+#bgmask{position:absolute;inset:0;background:var(--bg);transition:opacity .2s}
+header,main,footer{position:relative;z-index:1}
+/* 有自定义背景时，面板和格子让出一点透明度，让背景透上来 */
+html.has-bg header,html.has-bg footer{background:var(--panel-t);backdrop-filter:blur(14px) saturate(1.15);-webkit-backdrop-filter:blur(14px) saturate(1.15)}
+html.has-bg body{background:transparent}
+html.has-bg .cell{background:var(--cell-t);border-color:var(--line-t)}
+html.has-bg .cell::before{opacity:.3}
+html.has-bg .sec{border-left-color:var(--line-t)}
+html.has-bg .note{border-bottom-color:var(--line-t)}
+*{box-sizing:border-box}
+html{overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button,input{font-family:inherit;color:inherit}
+button{background:transparent;border:1px solid var(--line);color:var(--fg);border-radius:7px;padding:5px 10px;cursor:pointer;font-size:13px;line-height:1.4;transition:.12s;-webkit-user-select:none;user-select:none}
+button:hover{border-color:var(--accent);color:var(--accent)}
+button.pri{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:600}
+button.pri:hover{filter:brightness(1.08);color:var(--bg)}
+button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+
+/* 编辑器里"给人看"的呈现层——格子、行号、词格数、字数、各类标签——都不该被拖蓝选中：
+   真正要编辑的文字在透明输入框 .io 里，这些只是渲染出来的呈现或纯 UI。拖选它们除了误操作，
+   还会连带触发 .io 那条对不上折行的原生选区高亮。这里统一关掉，真正的输入框不受影响。 */
+.ln,.pat,.cnt,.tools,.grid,.cell,.ovf,.vlab,.vwrap,.secmeta,.tag,.sectools,.addline{
+  -webkit-user-select:none;user-select:none}
+
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:30;background:var(--panel);border-bottom:1px solid var(--line);padding:var(--sat) var(--sar) 0 var(--sal)}
+.bar{display:flex;align-items:center;gap:8px;padding:9px 16px;flex-wrap:wrap}
+#title{background:transparent;border:none;font-size:17px;font-weight:700;letter-spacing:.5px;padding:4px 6px;border-radius:6px;min-width:150px;width:210px}
+#title:focus{outline:none;background:var(--panel2)}
+.sep{width:1px;height:22px;background:var(--line);margin:0 3px}
+.grow{flex:1}
+.tag{font-size:11px;color:var(--dim);letter-spacing:1px;border:1px solid var(--line);padding:2px 7px;border-radius:20px}
+/* 应用图标。整个界面是一个自包含的 html，不外链任何资源，所以图标只在
+   <link rel="icon"> 里存一份 base64，这两个 img 的 src 启动时从那儿抄过来。 */
+.logo{width:22px;height:22px;border-radius:6px;flex:none;display:block}
+.cardhead{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.cardhead .logo{width:34px;height:34px;border-radius:9px}
+.cardhead h3{margin:0}
+
+/* ---------- 头部下拉菜单（导入/导出/语言） ---------- */
+.menuwrap{position:relative}
+.menubtn{display:inline-flex;align-items:center;gap:5px}
+.menubtn .car{font-size:10px;opacity:.65;transition:transform .12s}
+.menubtn.open .car{transform:rotate(180deg)}
+.menu{position:absolute;top:calc(100% + 7px);left:0;background:var(--panel);border:1px solid var(--line);
+  border-radius:11px;box-shadow:0 10px 28px rgba(0,0,0,.28);padding:6px;min-width:200px;z-index:40;
+  display:none;flex-direction:column;gap:1px}
+.menu.show{display:flex}
+/* 默认贴着触发按钮左边展开；JS 在展开时会按需加一段行内 left 偏移，
+   防止窄屏上（尤其语言菜单常常离右边界很近）把菜单顶出视口。 */
+.menu button{width:100%;justify-content:flex-start;text-align:left;border-color:transparent;
+  padding:9px 11px;border-radius:8px;white-space:nowrap}
+.menu button:hover{background:var(--panel2);color:var(--accent)}
+.menu button.pri{background:transparent;color:var(--accent);font-weight:600}
+.menu button.pri:hover{background:var(--accent-soft)}
+.msep{height:1px;background:var(--line);margin:5px 3px}
+/* 触屏没有 hover，菜单按钮的点击区域按移动端习惯放宽一点 */
+@media (pointer:coarse){ .menu button{padding:12px 12px;font-size:14px} }
+
+/* ---------- doc ---------- */
+main{max-width:1080px;margin:0 auto;padding:26px calc(20px + var(--sar)) calc(160px + var(--sab)) calc(20px + var(--sal))}
+.sec{margin-bottom:26px;border-left:2px solid var(--line);padding-left:14px}
+.sec:focus-within{border-left-color:var(--accent)}
+.sechead{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.secname{background:transparent;border:1px dashed transparent;border-radius:6px;font-size:13px;font-weight:700;letter-spacing:1.5px;color:var(--accent);padding:3px 7px;width:190px}
+.secname:hover{border-color:var(--line)}
+.secname:focus{outline:none;border-color:var(--accent);border-style:solid}
+.secmeta{font-size:11px;color:var(--dim)}
+.sectools{display:flex;gap:4px;opacity:0;transition:.15s}
+.sec:hover .sectools,.sec:focus-within .sectools{opacity:1}
+.sectools button{padding:2px 7px;font-size:11px}
+
+.row{display:flex;align-items:center;gap:8px;padding:3px 0;border-radius:8px;flex-wrap:wrap}
+.row.active{background:var(--accent-soft)}
+.ln{width:26px;text-align:right;font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums;flex:none}
+.pat{flex:none;min-width:52px;font-size:11px;padding:2px 6px;color:var(--dim);border-color:transparent;font-variant-numeric:tabular-nums}
+.row:hover .pat{border-color:var(--line)}
+.pat:hover{color:var(--accent)}
+.pat-edit{width:120px;font-size:12px;background:var(--panel2);border:1px solid var(--accent);border-radius:7px;padding:3px 7px;outline:none}
+
+.wrap{position:relative;flex:1;min-width:0}
+.grid{display:flex;align-items:center;align-content:center;gap:var(--ggap);flex-wrap:wrap;row-gap:calc(var(--gap) + 6px)}
+/* 分句本身也要能换行：一句很长（比如整句就是一个 19 格的分句）时，若分句不换行，
+   它就是一个撑不开也压不小的巨块，会溢出 .wrap 盖到右边的字数和辅助操作条。
+   允许分句内部换行后，长句会自然折成几排，不会挤爆右边的工具。 */
+.grp{display:flex;gap:var(--gap);position:relative;flex-wrap:wrap;row-gap:calc(var(--gap) + 6px)}
+.grp.cur::after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:2px;background:var(--accent);opacity:.55;border-radius:2px}
+.cell{position:relative;width:var(--cell);height:var(--cell);border:1px solid var(--cellbd);background:var(--cellbg);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:calc(var(--cell)*.62);color:var(--fill);flex:none;transition:border-color .12s,background .12s;font-style:normal}
+.cell::before{content:"";position:absolute;inset:0;background:
+  linear-gradient(to right,transparent calc(50% - .5px),var(--cellbd) calc(50% - .5px),var(--cellbd) calc(50% + .5px),transparent calc(50% + .5px)),
+  linear-gradient(to bottom,transparent calc(50% - .5px),var(--cellbd) calc(50% - .5px),var(--cellbd) calc(50% + .5px),transparent calc(50% + .5px));
+  opacity:.22;pointer-events:none}
+.cell.filled::before{opacity:0}
+.cell.caret::after{content:"";position:absolute;left:2px;top:10%;bottom:10%;width:2px;background:var(--accent);animation:bl 1.05s steps(1) infinite}
+.cell.caret.end::after{left:auto;right:2px}
+/* 选区用"格子高亮"表示：由 paintSel() 按 selectionStart/End 给对应格子加 .sel，
+   高亮永远跟着格子走，折多少行都对得上（详见下方 .io::selection 说明）。
+   has-bg 时 .cell 背景更透，这里用更高优先级的选择器盖过它。 */
+.cell.sel,html.has-bg .cell.sel{background:var(--accent-soft);border-color:var(--accent)}
+@keyframes bl{50%{opacity:0}}
+.cell .tail{position:absolute;right:1px;bottom:0;font-size:calc(var(--cell)*.32);line-height:1;font-style:normal;color:var(--fill);opacity:.88;pointer-events:none}
+.ovf{color:var(--ovf);font-size:calc(var(--cell)*.55);letter-spacing:2px;border-bottom:2px wavy var(--ovf);border-bottom-style:dashed;align-self:center}
+
+.io{position:absolute;inset:0;width:100%;height:100%;background:transparent;border:none;outline:none;color:transparent;caret-color:transparent;
+  font-size:calc(var(--cell)*.62);letter-spacing:calc(var(--cell) + var(--gap) - var(--cell)*.62);padding-left:calc(var(--cell)*.19);z-index:2;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;}
+/* 透明输入框是单行的，浏览器原生选区高亮会沿这条单行画出来、和折行后的格子对不上，
+   表现为一条飘忽的斜带子。这里把原生高亮设为透明，改由 paintSel() 把选区画到对应的
+   格子上（.cell.sel），高亮就永远跟着格子走。 */
+.io::selection{background:transparent}
+.comp{position:absolute;top:calc(100% - 2px);z-index:5;background:var(--accent);color:var(--bg);font-size:13px;padding:1px 7px;border-radius:5px;white-space:nowrap;display:none}
+
+.cnt{flex:none;width:52px;text-align:right;font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums}
+
+/* 备选版本 + 备注 */
+.extra{flex-basis:100%;display:none;align-items:center;gap:8px;padding:1px 0 7px 94px;flex-wrap:wrap}
+.vwrap{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.row:focus-within .extra,.row.hasx .extra{display:flex}
+.vlab{font-size:10px;color:var(--dim);letter-spacing:1px;flex:none}
+.vc{font-size:11px;padding:2px 8px;color:var(--dim);border-color:var(--line);max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vc.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);cursor:default}
+.vc.on:hover{color:var(--accent)}
+.vx{margin-left:6px;opacity:.4;font-weight:700}
+.vx:hover{opacity:1;color:var(--ovf)}
+.vadd{font-size:11px;padding:2px 8px;border-style:dashed;color:var(--dim)}
+.note{flex:1;min-width:170px;background:transparent;border:1px solid transparent;border-bottom:1px dashed var(--line);border-radius:0;font-size:12px;color:var(--dim);padding:2px 4px;font-style:italic}
+.note:focus{outline:none;border-bottom-color:var(--accent);color:var(--fg)}
+.note::placeholder{color:var(--line);font-style:normal}
+.ck{display:flex;align-items:flex-start;gap:9px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;margin-bottom:8px;cursor:pointer;font-size:13px;color:var(--fg)}
+.ck:hover{border-color:var(--accent)}
+.ck input{margin:2px 0 0;accent-color:var(--accent);width:15px;height:15px;flex:none}
+.ck i{display:block;font-style:normal;font-size:11px;color:var(--dim);margin-top:2px}
+.prev{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:11px 13px;font-size:12px;line-height:1.85;color:var(--dim);white-space:pre-wrap;max-height:210px;overflow:auto;margin-top:12px;font-family:var(--font)}
+.prev b{color:var(--accent);font-weight:600}
+.tools{flex:none;display:flex;gap:3px;opacity:0;transition:.15s}
+.row:hover .tools,.row:focus-within .tools{opacity:1}
+.tools button{padding:1px 7px;font-size:12px;min-width:26px}
+@media (pointer:coarse){
+  /* 触屏没有"悬停"，这排按钮平时用不上却仍占着一整排的宽度，
+     会把词格输入框的实际可点区域挤到只剩第一格那么宽。
+     改成：不聚焦这一行时完全脱离布局，聚焦时另起一行显示，不再跟词格抢横向空间。 */
+  .tools{display:none;flex-basis:100%;justify-content:flex-end;opacity:1}
+  .row.active .tools{display:flex}
+  /* 段落工具栏（.sectools）跟行内工具栏是同一个毛病：opacity:0 只是隐身，
+     宽度还占着，段名输入框 + 这一排按钮在窄屏上经常比屏幕还宽，把整个
+     页面横向撑开。同样改成默认脱离布局，焦点落在这一段里才展开成新的一行。 */
+  .sectools{display:none;flex-basis:100%;justify-content:flex-end;opacity:1}
+  .sec:focus-within .sectools{display:flex}
+}
+.addline{margin:6px 0 0 34px;font-size:11px;padding:2px 9px;color:var(--dim);border-style:dashed}
+
+footer{position:fixed;bottom:0;left:0;right:0;background:var(--panel);border-top:1px solid var(--line);padding:8px calc(18px + var(--sar)) calc(8px + var(--sab)) calc(18px + var(--sal));font-size:12px;color:var(--dim);display:flex;gap:18px;align-items:center;flex-wrap:wrap;z-index:20}
+footer b{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
+.bar-r{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.dot{width:3px;height:3px;border-radius:50%;background:var(--line);flex:none}
+.me{display:inline-flex;align-items:center;gap:4px;color:var(--dim);text-decoration:none;font-size:12px;padding:2px 6px;border-radius:6px;border:1px solid transparent;transition:.12s}
+.me:hover{color:var(--accent);border-color:var(--line);background:var(--panel2)}
+.me svg{opacity:.85}
+
+.credit{margin-top:22px;padding-top:14px;border-top:1px solid var(--line)}
+.credit a.me{padding-left:4px}
+
+/* 日语/韩语文案是机翻，界面切到这两种语言时在帮助面板末尾挂一条说明；
+   中文下 aiTransNote 是空串，applyI18n 会把这块整个藏起来。 */
+.ainote{margin-top:22px;padding:10px 12px;border:1px dashed var(--line);border-radius:8px;color:var(--dim);font-size:12px;line-height:1.7}
+.ainote a{color:var(--accent)}
+
+#help,#exp,#bgp{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:none;align-items:center;justify-content:center;padding:calc(20px + var(--sat)) 20px calc(20px + var(--sab))}
+#help.show,#exp.show,#bgp.show{display:flex}
+#exp .card,#bgp .card{max-width:520px}
+
+/* 背景设置面板 */
+.bgrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.pre{padding:7px 16px}
+.swatch{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);padding:0;cursor:pointer}
+.swatch:hover{border-color:var(--accent);transform:scale(1.08)}
+.colorlab{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:7px;padding:4px 10px 4px 12px;font-size:13px;cursor:pointer}
+.colorlab:hover{border-color:var(--accent);color:var(--accent)}
+.colorlab input{width:30px;height:24px;border:none;background:none;padding:0;cursor:pointer}
+.tip{font-size:12px;color:var(--dim);margin:2px 0 0}
+.slid{display:block;font-size:12px;color:var(--dim);margin-top:14px}
+.slid b{color:var(--accent);font-weight:600;font-variant-numeric:tabular-nums}
+.slid input{width:100%;margin-top:7px;accent-color:var(--accent)}
+#bgadj{border-top:1px solid var(--line);margin-top:16px;padding-top:4px}
+#bgthumb{width:100%;height:104px;border-radius:9px;border:1px solid var(--line);background-size:cover;background-position:center;margin-top:12px;display:none}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:620px;width:100%;padding:22px 26px;max-height:82vh;overflow:auto}
+.card h3{margin:0 0 4px;font-size:15px}
+.card h4{margin:18px 0 6px;font-size:12px;color:var(--accent);letter-spacing:1px}
+.card p,.card li{font-size:13px;line-height:1.75;color:var(--dim);margin:3px 0}
+kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:1px 6px;font-size:11px;color:var(--fg);font-family:ui-monospace,monospace}
+pre{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6;overflow:auto;color:var(--fg)}
+#drop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:60;display:none;align-items:center;justify-content:center;font-size:18px;color:var(--accent);border:3px dashed var(--accent);pointer-events:none}
+#drop.show{display:flex}
+#toast{position:fixed;bottom:calc(56px + var(--sab));left:50%;transform:translateX(-50%);background:var(--accent);color:var(--bg);padding:7px 16px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;transition:.2s;pointer-events:none;z-index:70}
+#toast.show{opacity:1}
+
+/* ---------- AI 填词面板 ---------- */
+#aip{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:none;align-items:center;justify-content:center;padding:calc(20px + var(--sat)) 20px calc(20px + var(--sab))}
+#aip.show{display:flex}
+#aip .card{max-width:560px}
+.airow{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.airow label{font-size:12px;color:var(--dim);letter-spacing:.5px}
+.airow input[type="text"],.airow input[type="password"],.airow textarea{
+  background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;
+  font-size:13px;color:var(--fg);outline:none;font-family:inherit;resize:vertical}
+.airow input:focus,.airow textarea:focus{border-color:var(--accent)}
+.airow textarea{line-height:1.6}
+.aihint{font-size:11px;color:var(--dim)}
+.aiadv{flex-direction:row;align-items:center;gap:10px;flex-wrap:wrap}
+.aiadv label{flex:none}
+.aiadv input[type="range"]{flex:1;min-width:120px;accent-color:var(--accent)}
+.aiadv select{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;
+  font-size:13px;color:var(--fg);outline:none;font-family:inherit;max-width:240px}
+.aiadv select:focus{border-color:var(--accent)}
+.aiadv b{color:var(--accent);font-weight:600;font-variant-numeric:tabular-nums;min-width:44px;text-align:right}
+.aibtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.aibtns .stop{border-color:var(--ovf);color:var(--ovf);font-weight:600}
+.aibtns .stop:hover{border-color:var(--ovf);color:var(--ovf);background:rgba(229,106,74,.12)}
+/* 顶栏 AI 按钮：运行中亮起呼吸点，提示后台还有任务在跑 */
+#aibtn.ai-running{border-color:var(--accent);color:var(--accent);position:relative;padding-left:24px}
+#aibtn.ai-running::before{content:"";position:absolute;left:9px;top:50%;transform:translateY(-50%);
+  width:8px;height:8px;border-radius:50%;background:var(--accent);animation:aiPulse 1.2s ease-in-out infinite}
+@keyframes aiPulse{0%,100%{opacity:.35;transform:translateY(-50%) scale(.8)}50%{opacity:1;transform:translateY(-50%) scale(1.15)}}
+.aiprog{display:flex;align-items:center;gap:10px;margin-top:12px}
+.aibar{flex:1;height:8px;border-radius:5px;background:var(--panel2);border:1px solid var(--line);overflow:hidden}
+#aifillbar{height:100%;width:0;background:var(--accent);border-radius:5px;transition:width .25s}
+.aiptext{font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums;flex:none;max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ailog{margin-top:14px;max-height:180px;overflow:auto;background:var(--panel2);border:1px solid var(--line);
+  border-radius:8px;padding:8px 10px;font-size:11.5px;line-height:1.7;color:var(--dim);
+  font-family:ui-monospace,monospace;display:flex;flex-direction:column;gap:2px}
+.ailog:empty{display:none}

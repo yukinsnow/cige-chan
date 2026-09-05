@@ -3,6 +3,7 @@
 /src-tauri/gen/
 
 # Node
+dist/
 node_modules/
 package-lock.json
 

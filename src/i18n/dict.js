@@ -1,7 +1,7 @@
 "use strict";
 /* i18n 文案字典已被单独拆分成 i18n.js */
 
-const I18N = {
+export const I18N = {
 
 zh: {
   brand: "词格酱", tagline: "中文歌词写作台", untitled: "未命名歌曲",

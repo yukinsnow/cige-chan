@@ -1,14 +1,24 @@
 {
   "name": "cige-chan",
   "private": true,
-  "version": "2.0.3",
+  "version": "3.0.0-dev",
   "description": "词格酱 · 中文歌词写作台",
+  "type": "module",
   "scripts": {
+    "dev:web": "vite",
+    "build:web": "vite build",
+    "preview": "vite preview",
+    "test": "node tests/roundtrip.test.mjs",
     "tauri": "tauri",
     "dev": "tauri dev",
     "build": "tauri build"
   },
+  "dependencies": {
+    "vue": "^3.5.13"
+  },
   "devDependencies": {
-    "@tauri-apps/cli": "^2"
+    "@tauri-apps/cli": "^2",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "vite": "^6.0.7"
   }
 }

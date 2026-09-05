@@ -2,10 +2,13 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "CigeChan",
   "mainBinaryName": "cige-chan",
-  "version": "2.0.3",
+  "version": "3.0.0-dev",
   "identifier": "com.yukinsnow.cigechan",
   "build": {
-    "frontendDist": "../src"
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "npm run dev:web",
+    "beforeBuildCommand": "npm run build:web"
   },
   "app": {
     "withGlobalTauri": true,

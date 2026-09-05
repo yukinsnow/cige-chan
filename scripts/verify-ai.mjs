@@ -1,8 +1,8 @@
 // 词格酱 AI 填词功能 — 本地 CDP 验证脚本
-// 前置：本地静态服务器 python -m http.server 8741 --directory src；CDP 浏览器 9223
+// 前置：Vite dev server（npm run dev:web）；CDP 浏览器 9223
 // 用法：node scripts/verify-ai.mjs
 const CDP = "http://127.0.0.1:9223";
-const APP = "http://127.0.0.1:8741/index.html";
+const APP = "http://localhost:1420/";
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const tabs = await (await fetch(CDP + "/json")).json();

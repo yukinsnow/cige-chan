@@ -1,7 +1,7 @@
 // AI 停止按钮 + 新交互验证
 // 重点：AbortController 停止在途请求、已完成的句子保留、运行指示灯、运行中关/开面板
 const CDP = "http://127.0.0.1:9223";
-const APP = "http://127.0.0.1:8741/index.html";
+const APP = "http://localhost:1420/";
 const tabs = await (await fetch(CDP + "/json")).json();
 const page = tabs.find(t => t.type === "page" && !t.url.startsWith("chrome://"));
 const ws = new WebSocket(page.webSocketDebuggerUrl);

@@ -1,6 +1,6 @@
 // 主题色功能验证：色板渲染、切换、CSS 变量生效、持久化
 const CDP = "http://127.0.0.1:9223";
-const APP = "http://127.0.0.1:8741/index.html";
+const APP = "http://localhost:1420/";
 const tabs = await (await fetch(CDP + "/json")).json();
 const page = tabs.find(t => t.type === "page" && !t.url.startsWith("chrome://"));
 const ws = new WebSocket(page.webSocketDebuggerUrl);
