@@ -13,7 +13,7 @@ import AboutPane from './settings/AboutPane.vue';
 // 左侧分类 + 右侧内容，不用级联子菜单——那个在触屏上点不中
 const TABS = [
   { id: 'look', label: 'setAppearance', icon: Palette, pane: AppearancePane },
-  { id: 'llm', label: 'setLlm', icon: Sparkles, pane: LlmPane },
+  { id: 'llm', label: 'setLlm', short: 'setLlmShort', icon: Sparkles, pane: LlmPane },
   { id: 'lang', label: 'setLang', icon: Languages, pane: LangPane },
   { id: 'about', label: 'setAbout', icon: Info, pane: AboutPane },
 ];
@@ -33,7 +33,9 @@ const tab = computed({
       <div class="setwrap">
         <nav class="setnav">
           <button v-for="x in TABS" :key="x.id" :class="{ on: tab === x.id }" @click="tab = x.id">
-            <Icon :node="x.icon" :size="15" /><span>{{ t(x.label) }}</span></button>
+            <Icon :node="x.icon" :size="15" />
+            <span class="navfull">{{ t(x.label) }}</span>
+            <span class="navshort">{{ t(x.short || x.label) }}</span></button>
         </nav>
         <div class="cbody setpane">
           <component :is="TABS.find(x => x.id === tab).pane" />

@@ -110,13 +110,24 @@ html[data-theme="dark"][data-accent="red"]{ --accent:#e06655; --accent-soft:rgba
 #bgmask{position:absolute;inset:0;background:var(--bg);transition:opacity .2s}
 header,main,footer{position:relative;z-index:1}
 /* 有自定义背景时，面板和格子让出一点透明度，让背景透上来 */
-html.has-bg header,html.has-bg footer{background:var(--panel-t);backdrop-filter:blur(14px) saturate(1.15);-webkit-backdrop-filter:blur(14px) saturate(1.15)}
+/* 有背景图时所有的「面」都要让背景透上来。新加一个面就得在这里补一条，
+   漏掉的那个会变成一块挡住壁纸的实色。 */
 html.has-bg body{background:transparent}
+html.has-bg main{background:transparent}
+html.has-bg header,html.has-bg footer,html.has-bg .tstrip{
+  background:var(--panel-t);backdrop-filter:blur(14px) saturate(1.15);
+  -webkit-backdrop-filter:blur(14px) saturate(1.15)}
 html.has-bg .cell{background:var(--cell-t);border-color:var(--line-t)}
 html.has-bg .cell::before{opacity:.3}
-html.has-bg .sec{background:var(--panel-t);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:none}
-html.has-bg .note{border-bottom-color:var(--line-t)}
+html.has-bg .sec{background:var(--panel-t);backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);box-shadow:none}
+html.has-bg .card,html.has-bg .menu,html.has-bg .tourcard{
+  background:var(--panel-t);backdrop-filter:blur(20px) saturate(1.15);
+  -webkit-backdrop-filter:blur(20px) saturate(1.15)}
+html.has-bg .demogrid,html.has-bg pre,html.has-bg .disclaimer{background:var(--cell-t)}
 *{box-sizing:border-box}
+/* 界面里的图片（logo 之类）不给拖：拖回窗口会被当成用户要设的背景图 */
+img{-webkit-user-drag:none;user-drag:none}
 /* 面板制而不是文档流：整窗不滚，只有中间的词格区自己滚。
    这样顶栏底栏是固定的面，不需要 sticky/fixed 去追文档，也没有一条通天滚动条。 */
 html,body{height:100%;overflow:hidden}
@@ -134,7 +145,8 @@ button{background:transparent;border:none;color:var(--fg);border-radius:var(--r-
   transition:background var(--dur-1) var(--ease),color var(--dur-1) var(--ease),transform var(--dur-1) var(--ease)}
 button:hover{background:var(--hov)}
 button:active{background:var(--act);transform:scale(.97)}
-button:disabled{opacity:.4;pointer-events:none}
+button:disabled{opacity:.45;pointer-events:none}
+button.pri:disabled{background:var(--sunk);color:var(--dim);box-shadow:none;font-weight:400}
 button.pri{background:var(--accent);color:var(--on-accent);font-weight:600;box-shadow:var(--sh-1)}
 button.pri:hover{filter:brightness(1.06);box-shadow:var(--sh-2);transform:translateY(-1px)}
 button.pri:active{transform:translateY(0) scale(.98);box-shadow:var(--sh-1)}
@@ -220,13 +232,13 @@ main{overflow:auto;overscroll-behavior:contain;background:var(--bg);
 .sec:focus-within{border-left-color:var(--accent)}
 .sechead{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .secname{background:transparent;border:none;border-radius:var(--r-sm);font-size:13.5px;font-weight:700;
-  letter-spacing:1.5px;color:var(--accent);padding:3px 7px;width:190px}
+  letter-spacing:1.5px;color:var(--accent);padding:3px 7px;width:150px;max-width:40%}
 .secname:hover{background:var(--hov)}
 .secname:focus{background:var(--sunk);outline:none}
 .secname:hover{border-color:var(--line)}
 .secname:focus{outline:none;border-color:var(--accent);border-style:solid}
-.secmeta{font-size:11px;color:var(--dim)}
-.sectools{display:flex;gap:4px;margin-left:auto;opacity:0;transition:opacity var(--dur-2) var(--ease)}
+.secmeta{font-size:11px;color:var(--dim);margin-left:auto;font-variant-numeric:tabular-nums}
+.sectools{display:flex;gap:4px;opacity:0;transition:opacity var(--dur-2) var(--ease)}
 .sec:hover .sectools,.sec:focus-within .sectools{opacity:1}
 .sectools button{padding:2px 7px;font-size:11px}
 .sectools button:has(>svg:only-child){padding:3px}
@@ -347,6 +359,12 @@ footer b{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
    中文下 aiTransNote 是空串，applyI18n 会把这块整个藏起来。 */
 .ainote{margin-top:22px;padding:11px 13px;background:var(--sunk);border-radius:var(--r-md);
   color:var(--dim);font-size:12px;line-height:1.7}
+/* 缺配置时的引导条：说明一行、按钮一行，别挤成一句话 */
+.aineed{display:flex;flex-direction:column;align-items:flex-start;gap:9px;
+  margin:0 0 16px;padding:12px 14px;background:var(--accent-soft);border-radius:var(--r-md);
+  color:var(--fg);font-size:12.5px;line-height:1.7}
+.aineed button{background:var(--panel2);box-shadow:var(--sh-1)}
+.aineed button:hover{background:var(--panel)}
 .ainote a{color:var(--accent)}
 
 #help,#exp,#settings{position:fixed;inset:0;background:var(--scrim);
@@ -354,6 +372,8 @@ footer b{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
   z-index:50;display:none;align-items:center;justify-content:center;
   padding:calc(20px + var(--sat)) 20px calc(20px + var(--sab))}
 #help.show,#exp.show,#settings.show{display:flex}
+/* 设置可以从 AI 面板里点开，层级要高于其它弹层 */
+#settings{z-index:55}
 #exp .card{max-width:520px}
 
 /* 背景设置面板 */
@@ -367,7 +387,7 @@ footer b{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
 .tip{font-size:12px;color:var(--dim);margin:2px 0 0}
 .slid{display:block;font-size:12px;color:var(--dim);margin-top:14px}
 .slid b{color:var(--accent);font-weight:600;font-variant-numeric:tabular-nums}
-.slid input{width:100%;margin-top:7px;accent-color:var(--accent)}
+.slid input{width:100%;margin-top:9px}
 #bgadj{border-top:1px solid var(--line);margin-top:16px;padding-top:4px}
 #bgthumb{width:100%;height:104px;border-radius:9px;border:1px solid var(--line);background-size:cover;background-position:center;margin-top:12px;display:none}
 /* 弹层不是一张会滚的纸，而是头/身/脚三段：标题和操作固定，只有中间滚。
@@ -428,7 +448,7 @@ pre{background:var(--sunk);border:none;border-radius:var(--r-md);padding:12px 14
 .aihint{font-size:11px;color:var(--dim)}
 .aiadv{flex-direction:row;align-items:center;gap:10px;flex-wrap:wrap}
 .aiadv label{flex:none}
-.aiadv input[type="range"]{flex:1;min-width:120px;accent-color:var(--accent)}
+.aiadv input[type="range"]{flex:1;min-width:120px}
 .aiadv select{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;
   font-size:13px;color:var(--fg);outline:none;font-family:inherit;max-width:240px}
 .aiadv select:focus{border-color:var(--accent)}
@@ -527,12 +547,19 @@ footer:hover .statcopy,.statcopy:focus-visible{opacity:1}
 .setlist button{justify-content:flex-start;padding:9px 12px}
 .setlist button.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
 /* 关于页 */
-.aboutbox{text-align:center;padding:14px 0 6px}
-.aboutbox .logo{width:64px;height:64px;border-radius:var(--r-md);margin:0 auto 10px;box-shadow:var(--sh-2)}
-.aboutbox h3{margin:0;font-size:17px}
+/* 关于页内容少，撑在面板中间比顶着上边好看 */
+.setpane:has(.aboutbox){display:flex;flex-direction:column;justify-content:center;gap:2px}
+.aboutbox{text-align:center}
+.aboutbox .logo{width:72px;height:72px;border-radius:var(--r-lg);margin:0 auto 12px;box-shadow:var(--sh-2)}
+.aboutbox h3{margin:0;font-size:19px;letter-spacing:1px}
 .aboutbox .tagline{color:var(--dim);font-size:12.5px;margin:2px 0 0}
-.aboutbox .ver{color:var(--dim);font-size:11.5px;margin:8px 0 0;font-variant-numeric:tabular-nums}
-.powered{text-align:center;color:var(--dim);font-size:12px;margin:18px 0 0;letter-spacing:.4px}
+.aboutbox .ver{color:var(--dim);font-size:11px;margin:6px 0 0;font-variant-numeric:tabular-nums;
+  letter-spacing:.6px;opacity:.8}
+/* 词格酱制作组和应答组是两个署名，用一块底色托住、跟版本信息分开 */
+.aboutby{margin:22px auto 0;padding:11px 18px;background:var(--sunk);border-radius:var(--r-md);
+  text-align:center}
+.powered{color:var(--fg);font-size:12.5px;margin:0;letter-spacing:.4px}
+.powered b{color:var(--accent);font-weight:600}
 /* 免责声明门禁 */
 .disclaimer{background:var(--sunk);border-radius:var(--r-md);padding:14px 16px;
   font-size:12.5px;line-height:1.85;color:var(--dim)}
@@ -544,10 +571,11 @@ footer:hover .statcopy,.statcopy:focus-visible{opacity:1}
 @media (max-width: 640px){
   /* 设置弹层横着放不下：分类栏改成顶部横向滚动的一条 */
   .setwrap{flex-direction:column;min-block-size:0}
-  .setnav{width:auto;flex-direction:row;overflow-x:auto;overscroll-behavior-x:contain;
-    padding:0 14px 10px;gap:6px;scrollbar-width:none}
-  .setnav::-webkit-scrollbar{display:none}
-  .setnav button{flex:none;padding:7px 12px;background:var(--sunk)}
+  /* 分类栏平铺成一排，别横向滚动——滚动时只露出第一项，用户不知道还有别的 */
+  .setnav{width:auto;flex-direction:row;padding:0 14px 12px;gap:5px}
+  .setnav button{flex:1;min-width:0;flex-direction:column;gap:5px;padding:9px 4px;
+    background:var(--sunk);font-size:11px;text-align:center;white-space:normal;line-height:1.3}
+  .setnav button>span{overflow:hidden;text-overflow:ellipsis;width:100%}
   .setpane{padding:0 16px 16px}
   .card{max-height:88vh;border-radius:var(--r-md)}
   .chead{padding:14px 16px 10px}
@@ -570,3 +598,97 @@ footer:hover .statcopy,.statcopy:focus-visible{opacity:1}
 .ctxmask{position:fixed;inset:0;z-index:88}
 .ctxmenu{position:fixed;top:auto;left:auto;min-width:158px;z-index:89;transform-origin:top left}
 .ctxmenu button:disabled{opacity:.35;pointer-events:none}
+
+/* ---------- 帮助面板 ---------- */
+.helplead{font-size:14.5px;line-height:1.8;color:var(--fg);margin:2px 0 14px}
+.tourbtn{margin-bottom:6px}
+
+/* ---------- 新用户引导 ---------- */
+.tourmask{position:fixed;inset:0;z-index:95;display:flex;align-items:center;justify-content:center;
+  padding:calc(20px + var(--sat)) 20px calc(20px + var(--sab));
+  background:var(--scrim);backdrop-filter:blur(18px) saturate(1.1);-webkit-backdrop-filter:blur(18px) saturate(1.1)}
+.tourcard{background:var(--panel2);border-radius:var(--r-xl);box-shadow:var(--sh-3);
+  width:100%;max-width:680px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;
+  animation:cardIn var(--dur-3) var(--ease-out)}
+.tourbody{flex:1;min-height:0;overflow:auto;display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  align-items:center;padding:30px 30px 22px}
+.tourstep{font-size:11.5px;letter-spacing:1.6px;color:var(--accent);margin:0 0 8px;
+  font-variant-numeric:tabular-nums;font-weight:600}
+.tourtext h2{margin:0 0 10px;font-size:21px;line-height:1.35;letter-spacing:.5px}
+.tourp{font-size:13.5px;line-height:1.85;color:var(--dim);margin:0}
+.tourdemo{display:flex;align-items:center;justify-content:center;min-width:0}
+.tourlogo{width:124px;height:124px;border-radius:var(--r-lg);box-shadow:var(--sh-2)}
+/* 演示用的小词格：格子比正文小一号，纯展示不响应鼠标 */
+.demogrid{--cell:34px;display:flex;flex-direction:column;gap:10px;align-items:flex-start;
+  background:var(--panel);border-radius:var(--r-md);padding:14px;box-shadow:var(--sh-1);pointer-events:none}
+.demopat{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums;letter-spacing:1px}
+.demorow{display:flex;gap:var(--ggap);flex-wrap:wrap}
+.demogrp{display:flex;gap:var(--gap)}
+.demotools{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.tourfoot{flex:none;display:flex;align-items:center;gap:8px;padding:0 30px 24px}
+.tourdots{flex:1;display:flex;gap:7px;align-items:center;justify-content:center;pointer-events:auto}
+.tourdots i{width:7px;height:7px;border-radius:var(--r-full);background:var(--line);cursor:pointer;
+  transition:width var(--dur-2) var(--ease),background var(--dur-2) var(--ease)}
+.tourdots i.on{width:22px;background:var(--accent)}
+@media (max-width: 640px){
+  .tourbody{grid-template-columns:1fr;padding:22px 20px 16px;gap:18px}
+  .tourdemo{order:-1}
+  .tourtext h2{font-size:18px}
+  .tourfoot{padding:0 20px 18px;flex-wrap:wrap}
+  .tourlogo{width:88px;height:88px}
+}
+.aboutlinks{display:flex;gap:8px;justify-content:center;margin:16px 0 0;font-size:12px}
+.aboutlinks .me{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;
+  border-radius:var(--r-full);color:var(--dim);text-decoration:none;
+  transition:background var(--dur-1) var(--ease),color var(--dur-1) var(--ease)}
+.aboutlinks .me:hover{background:var(--hov);color:var(--fg)}
+
+/* ---------- 自绘滑块 ----------
+   原生滑块的轨道高度、滑块大小、聚焦光圈都由系统定，跟界面对不上。
+   -webkit- 和 -moz- 两套伪元素不能合并进同一条规则：任一个选择器不认识，
+   整条规则就被整体丢弃，所以必须分开写。 */
+input[type="range"]{-webkit-appearance:none;appearance:none;background:transparent;
+  height:18px;cursor:pointer}
+input[type="range"]::-webkit-slider-runnable-track{height:6px;border-radius:var(--r-full);
+  background:linear-gradient(to right,var(--accent) var(--fill,0%),var(--sunk) var(--fill,0%))}
+input[type="range"]::-moz-range-track{height:6px;border-radius:var(--r-full);background:var(--sunk)}
+/* 已选区间：Firefox 有 ::-moz-range-progress，WebKit 没有，靠下面的渐变兜 */
+input[type="range"]::-moz-range-progress{height:6px;border-radius:var(--r-full);background:var(--accent)}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+  width:16px;height:16px;margin-top:-5px;border-radius:var(--r-full);
+  background:var(--accent);border:2px solid var(--panel);box-shadow:var(--sh-1);
+  transition:transform var(--dur-1) var(--ease),box-shadow var(--dur-1) var(--ease)}
+input[type="range"]::-moz-range-thumb{width:16px;height:16px;border-radius:var(--r-full);
+  background:var(--accent);border:2px solid var(--panel);box-shadow:var(--sh-1);
+  transition:transform var(--dur-1) var(--ease),box-shadow var(--dur-1) var(--ease)}
+input[type="range"]:hover::-webkit-slider-thumb{transform:scale(1.12);box-shadow:var(--sh-2)}
+input[type="range"]:hover::-moz-range-thumb{transform:scale(1.12);box-shadow:var(--sh-2)}
+input[type="range"]:active::-webkit-slider-thumb{transform:scale(.96)}
+input[type="range"]:active::-moz-range-thumb{transform:scale(.96)}
+input[type="range"]:focus-visible{outline:none}
+input[type="range"]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 4px var(--accent-soft),var(--sh-1)}
+input[type="range"]:focus-visible::-moz-range-thumb{box-shadow:0 0 0 4px var(--accent-soft),var(--sh-1)}
+/* 触屏放大到能按得住的尺寸 */
+@media (pointer:coarse){
+  input[type="range"]{height:26px}
+  input[type="range"]::-webkit-slider-thumb{width:22px;height:22px;margin-top:-8px}
+  input[type="range"]::-moz-range-thumb{width:22px;height:22px}
+}
+
+/* ---------- 自绘下拉 ---------- */
+.sel-wrap{position:relative;display:inline-flex;min-width:0}
+.sel-btn{justify-content:space-between;gap:8px;width:100%;background:var(--sunk);
+  border-radius:var(--r-sm);padding:7px 10px;font-size:13px}
+.sel-btn:hover{background:var(--hov)}
+.sel-val{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sel-btn .car{opacity:.6;transition:transform var(--dur-2) var(--ease)}
+.sel-btn .car.up{transform:rotate(180deg)}
+.sel-list{top:calc(100% + 5px);left:0;right:0;min-width:100%;max-height:260px;overflow:auto}
+.sel-list button{justify-content:space-between;gap:10px}
+.sel-list button.on{color:var(--accent);font-weight:600}
+/* 分类标签有长短两版：宽屏用全称，窄屏平铺时用短的 */
+.navshort{display:none}
+@media (max-width: 640px){
+  .navfull{display:none}
+  .navshort{display:inline}
+}

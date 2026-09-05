@@ -31,7 +31,7 @@ const icon = import.meta.env.BASE_URL + 'logo.png';
 
 <template>
   <div class="tstrip" data-tauri-drag-region="deep">
-    <img class="logo" :src="icon" alt="">
+    <img class="logo" :src="icon" alt="" draggable="false">
     <span class="tag">{{ t('brand') }}</span>
     <span class="titlebox">
       <span class="tghost" aria-hidden="true">{{ shown }}</span>

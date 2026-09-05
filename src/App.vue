@@ -11,6 +11,7 @@ import ExportDialog from './components/ExportDialog.vue';
 import SettingsDialog from './components/SettingsDialog.vue';
 import DropHint from './components/DropHint.vue';
 import ContextMenu from './components/ContextMenu.vue';
+import Tour from './components/Tour.vue';
 import AiPanel from './components/AiPanel.vue';
 
 import { isDesktopApp } from './platform/env.js';
@@ -49,5 +50,6 @@ defineProps({
   <SettingsDialog />
   <DropHint />
   <ContextMenu />
+  <Tour />
   <AiPanel />
 </template>

@@ -6,9 +6,15 @@ import { aiCfg, aiUi, aiClosePanel, aiRunAll, aiStop, aiPendingLines, aiSaveCfg 
 import { ui } from '../core/state.js';
 import { openDialog } from '../ui/dialogs.js';
 
-const openLlm = () => { ui.settingsTab = 'llm'; openDialog('settings'); };
+// 去设置就先收起填词面板：两个弹层叠着既看不清也容易点错
+const openLlm = () => {
+  aiClosePanel();
+  ui.settingsTab = 'llm';
+  openDialog('settings');
+};
 import Icon from './Icon.vue';
 import { Settings } from 'lucide';
+import Select from './Select.vue';
 
 const scope = computed({
   get: () => aiCfg.scope,
@@ -46,20 +52,18 @@ watch(scopes, list => {
       <p>{{ t('aiIntro') }}</p>
 
       <!-- 接口没配全时不让点填词，直接把人带去设置 -->
-      <p v-if="!ready" class="ainote">
-        {{ t('aiToastNeedCfg') }}
-        <button style="margin-left:6px" @click="openLlm">
-          <Icon :node="Settings" :size="13" /> {{ t('setLlm') }}</button>
-      </p>
+      <div v-if="!ready" class="aineed">
+        <span>{{ t('aiToastNeedCfg') }}</span>
+        <button @click="openLlm">
+          <Icon :node="Settings" :size="14" /> {{ t('setLlm') }}</button>
+      </div>
 
       <div class="airow"><label>{{ t('aiStyleLabel') }}</label>
         <textarea v-model="style" rows="3" :disabled="aiUi.busy" :placeholder="t('aiStylePh')"></textarea>
         <span class="aihint">{{ t('aiStyleHint') }}</span></div>
 
       <div class="airow aiadv"><label>{{ t('aiScopeLabel') }}</label>
-        <select v-model="scope" :disabled="aiUi.busy">
-          <option v-for="o in scopes" :key="o.v" :value="o.v">{{ o.label }}</option>
-        </select>
+        <Select v-model="scope" :options="scopes" :disabled="aiUi.busy" />
         <span class="aihint">{{ pending }}</span></div>
       </div>
 

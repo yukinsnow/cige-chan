@@ -52,7 +52,7 @@ function reset() {
   <p class="tip">{{ t('accentTip') }}</p>
 
   <h4>{{ t('setCellH4') }}</h4>
-  <label class="slid"><span>{{ t('setCellH4') }}</span> <b>{{ cell }} px</b>
+  <label class="slid"><span>{{ t('setCellLabel') }}</span> <b>{{ cell }} px</b>
     <input type="range" min="28" max="72" step="2" v-model="cell"></label>
   <p class="tip">{{ t('setCellTip') }}</p>
 

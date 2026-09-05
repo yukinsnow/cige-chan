@@ -127,7 +127,7 @@ function rowEl(sec,si,L,li){
     L.alts.forEach((txt,i)=>{
       const on = txt === cur;
       const c = el("button","vc" + (on ? " on" : ""));
-      c.textContent = (i+1) + "· " + (short(txt) || t("versionEmpty"));
+      c.textContent = (i+1) + " · " + (short(txt) || t("versionEmpty"));
       c.dataset.tip = (on ? t("versionCurrentTitle") : t("versionSwitchTitle")) + txt;
       if(!on) c.onclick = ()=>{
         if(cur && !L.alts.includes(cur)) L.alts.push(cur);   // 先把未存的写法保住，绝不丢稿

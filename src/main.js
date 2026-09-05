@@ -9,6 +9,8 @@ import { TAURI, download, downloadBinary } from './platform/save.js';
 import { isDesktopApp, isMac } from './platform/env.js';
 import { initTips } from './ui/tip.js';
 import { openCtx, closeCtx } from './ui/ctxmenu.js';
+import { maybeStartTour } from './ui/tour.js';
+import { initSliders } from './ui/slider.js';
 import { bindExternalLinks } from './platform/link.js';
 import { applyAccent, applyBg, loadBgImage } from './core/theme.js';
 import { pick } from './platform/open.js';
@@ -220,12 +222,16 @@ function reflow(){
 }
 
 /* drag & drop */
-let dc = 0;
-addEventListener("dragenter",e=>{ e.preventDefault(); if(++dc) ui.dragging = true; });
-addEventListener("dragover",e=>e.preventDefault());
-addEventListener("dragleave",()=>{ if(--dc <= 0){ dc = 0; ui.dragging = false; } });
-addEventListener("drop",e=>{ e.preventDefault(); dc = 0; ui.dragging = false;
-  const f = e.dataTransfer.files[0]; if(f) readFile(f); });
+// 拖放只在有指针的设备上装：触屏没有「拖文件进来」这回事，
+// 装上只会因为长按拖动误触发，把随手拖到的图片设成背景。
+if(matchMedia("(pointer:fine)").matches){
+  let dc = 0;
+  addEventListener("dragenter",e=>{ e.preventDefault(); if(++dc) ui.dragging = true; });
+  addEventListener("dragover",e=>e.preventDefault());
+  addEventListener("dragleave",()=>{ if(--dc <= 0){ dc = 0; ui.dragging = false; } });
+  addEventListener("drop",e=>{ e.preventDefault(); dc = 0; ui.dragging = false;
+    const f = e.dataTransfer.files[0]; if(f) readFile(f); });
+}
 
 /* ================= 头部下拉菜单（导入/导出/语言） =================
    触发按钮点一下切换显示，点菜单里任意按钮或点菜单外任何地方都收起来，
@@ -290,6 +296,8 @@ async function boot(){
     onReflow: reflow,
   }).mount('#app');
   setCell(state.cell);
+  initSliders();
+  maybeStartTour();
 }
 boot().catch(e => {
   // 文案取不回来整个界面就是空的 至少说清是怎么回事
