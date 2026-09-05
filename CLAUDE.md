@@ -67,20 +67,30 @@ function CL(s){
 ## 结构
 
 ```
-index.html          Vite 入口
-src/main.js         命令式主体，正在逐块拆出去
+index.html          Vite 入口，只有骨架和挂载点
+src/main.js         导入导出 IO 与启动
+src/ai.js           AI 填词，纯逻辑不碰 DOM
 src/core/           纯逻辑，不碰 DOM
   clusters.js       格子切分与字符/格子索引换算
   state.js          工程数据模型
   txt.js            词格 TXT 与歌词文本的解析和导出
-src/i18n/           dict.js 是文案本体，index.js 给出 t()
-src/components/     Vue 组件
-src/islands.js      Vue 挂载入口
+  midi.js           MIDI 解析与序列化
+  theme.js          底色、主题色、背景图
+  persist.js        localStorage 存取
+src/components/     Vue 组件，App.vue 是根
+src/i18n/index.js   给出 t()，文案本体在 public/i18n/
+src/ui/             DOM 小工具、toast、菜单、弹层开关
+src/platform/       平台差异，桌面走 Tauri 浏览器退回原生
+public/             原样拷进产物，favicon、宣传页、i18n 文案
 src-tauri/          Rust，只做 Web 做不到的事
 tests/              node 直接跑，没有测试框架
 ```
 
-3.0 正在从单文件 HTML 迁到 Vue + Vite，逐块进行。每转好一块就在 islands.js 挂一个小 app，其余仍走 main.js 的命令式渲染，两边共享同一份 state。外圈都转完再合成一个根 App。词格交互本体最后动。
+词格本体（WordGrid.vue）是命令式渲染，render() 往 #doc 里写 DOM，不是模板。外部改了整篇（导入、AI 填词、切语言）调 redraw() 递增 ui.rev 触发重画。
+
+加一种界面语言：在 public/i18n/ 放一个 JSON，再把语言代码加进同目录的 index.json。都是数据文件，改完刷新就生效，不用重新构建。文件里 _name 是菜单显示名，_locale 给 toLocaleString，_order 决定菜单顺序；带变量的文案用 {0} {1} 占位，accentName 那种查表型直接写成嵌套对象。
+
+文案是 fetch 回来的，所以 boot() 是 async，挂载必须在 await loadLocales() 之后。tests/ 拿 node 直接跑、没有相对路径的 fetch，用 install() 把文案读进去。
 
 ## 代码
 

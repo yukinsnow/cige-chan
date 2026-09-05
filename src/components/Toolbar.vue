@@ -14,7 +14,7 @@ const props = defineProps({
   onReflow: Function, onCell: Function,
 });
 
-const icon = document.querySelector('link[rel="icon"]')?.href || '';
+const icon = import.meta.env.BASE_URL + 'favicon.png';
 const langLabel = computed(() => LANG_NAME[state.lang] || LANG_NAME.zh);
 
 const title = computed({

@@ -9,6 +9,11 @@
 import { strict as assert } from 'node:assert';
 import { state } from '../src/core/state.js';
 import { parseTxt, lyrTxt } from '../src/core/txt.js';
+import { install } from '../src/i18n/index.js';
+import { readFileSync } from 'node:fs';
+
+// node 没有相对路径的 fetch 文案直接读文件塞进去
+install({ zh: JSON.parse(readFileSync(new URL('../public/i18n/zh.json', import.meta.url), 'utf8')) });
 
 let pass = 0, fail = 0;
 function check(msg, fn) {

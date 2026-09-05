@@ -22,7 +22,10 @@ const scopes = computed(() => [
   { v: 'all', label: t('aiScopeAll') },
   ...state.sections.map((sec, i) => ({ v: 'sec-' + i, label: t('aiScopeSec', i + 1, sec.name) })),
 ]);
-const pending = computed(() => t('aiPending', aiPendingLines().length));
+const pending = computed(() => {
+  const n = aiPendingLines().length;
+  return n ? t('aiPending', n) : t('aiPendingNone');
+});
 const pct = computed(() => aiUi.total > 0 ? Math.round(aiUi.done / aiUi.total * 100) : 0);
 const progText = computed(() => aiUi.msg || t('aiProg', aiUi.done, aiUi.total));
 

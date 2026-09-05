@@ -12,7 +12,7 @@ import { aiClosePanel } from './ai.js';
 import { save, load } from './core/persist.js';
 import { cap, RT, CL } from './core/clusters.js';
 import { SAMPLE, state, ui, newLine, norm, normAll, redraw } from './core/state.js';
-import { I18N, t, LOCALE } from './i18n/index.js';
+import { I18N, t, LOCALE, loadLocales } from './i18n/index.js';
 import { parseTxt, patTxt } from './core/txt.js';
 import { MIDI_KS, parseMidiFile, collectNoteOns, midiNotesToSections, keyswitchTrackIndices, stripKeyswitch, serializeTrack, serializeMidiFile } from './core/midi.js';
 
@@ -228,32 +228,40 @@ addEventListener("drop",e=>{ e.preventDefault(); dc = 0; ui.dragging = false;
    Escape 也收起（跟已有的 help/exp/bgPanel 弹窗共用下面那个 Escape 监听）。 */
 /* ================= 语言切换 ================= */
 /* ================= boot ================= */
-load();
-if(!state.exp) state.exp = {alts:false, note:false};
-normAll();
-if(!state.bg) state.bg = {mode:"none", color:"#1a1614", dim:.55, blur:0};
-if(state.bg.mode === "image" && !ui.bgImg) state.bg.mode = "none";   // 图片没存住就退回默认
-if(!I18N[state.lang]) state.lang = "zh";
-// 词格很长的一句在手机窄屏上，默认 44px 一格很容易比屏幕还宽，把整个页面撑出横向滚动。
-// 没动过字号（还是出厂默认 44）又赶上窄屏，就先给个更适配的默认值；已经自己调过大小的
-// 不去动它——A−/A+ 存下来的选择要一直尊重。
-if(state.cell === 44 && innerWidth < 480) state.cell = 32;
-if(!state.accent || !["auto","blue","green","violet","rose","cyan","orange","slate","red"].includes(state.accent)) state.accent = "auto";
-applyBg();
-applyAccent();
-// 顶栏和帮助面板里的图标直接复用 <link rel="icon"> 那份 base64，不再多存一份
-{ const ico = document.querySelector('link[rel="icon"]');
-  if(ico) document.querySelectorAll("img.logo").forEach(im=>{ im.src = ico.href; }); }
-// document 的 lang 和标题跟着 state 走
-watchEffect(()=>{
-  document.documentElement.lang = LOCALE[state.lang] || "zh-CN";
-  document.title = state.title + " · " + t("brand");
-});
+// 挂载必须在 await 之后 否则首帧没有文案
+async function boot(){
+  await loadLocales();
+  load();
+  if(!state.exp) state.exp = {alts:false, note:false};
+  normAll();
+  if(!state.bg) state.bg = {mode:"none", color:"#1a1614", dim:.55, blur:0};
+  if(state.bg.mode === "image" && !ui.bgImg) state.bg.mode = "none";   // 图片没存住就退回默认
+  if(!I18N[state.lang]) state.lang = "zh";
+  // 词格很长的一句在手机窄屏上，默认 44px 一格很容易比屏幕还宽，把整个页面撑出横向滚动。
+  // 没动过字号（还是出厂默认 44）又赶上窄屏，就先给个更适配的默认值；已经自己调过大小的
+  // 不去动它——A−/A+ 存下来的选择要一直尊重。
+  if(state.cell === 44 && innerWidth < 480) state.cell = 32;
+  if(!state.accent || !["auto","blue","green","violet","rose","cyan","orange","slate","red"].includes(state.accent)) state.accent = "auto";
+  applyBg();
+  applyAccent();
+  // document 的 lang 和标题跟着 state 走
+  watchEffect(()=>{
+    document.documentElement.lang = LOCALE[state.lang] || "zh-CN";
+    document.title = state.title + " · " + t("brand");
+  });
 
-createApp(App, {
-  onNew: newProject, onOpenProj: ()=>openText("json"), onSaveProj: expProj,
-  onImpTxt: ()=>openText("txt"), onImpMidi: openMidi,
-  onExpPat: expPat, onExpMidiClean: expMidiClean, onExpMidiLyr: expMidiLyr,
-  onReflow: reflow, onCell: d=>setCell(state.cell + d),
-}).mount('#app');
-setCell(state.cell);
+  createApp(App, {
+    onNew: newProject, onOpenProj: ()=>openText("json"), onSaveProj: expProj,
+    onImpTxt: ()=>openText("txt"), onImpMidi: openMidi,
+    onExpPat: expPat, onExpMidiClean: expMidiClean, onExpMidiLyr: expMidiLyr,
+    onReflow: reflow, onCell: d=>setCell(state.cell + d),
+  }).mount('#app');
+  setCell(state.cell);
+}
+boot().catch(e => {
+  // 文案取不回来整个界面就是空的 至少说清是怎么回事
+  document.getElementById("app").innerHTML =
+    '<p style="padding:40px;line-height:1.8">词格酱启动失败：读不到 i18n 文案。<br>'
+    + '请确认 i18n/ 目录跟 index.html 放在一起。<br><code>' + e.message + '</code></p>';
+  throw e;
+});

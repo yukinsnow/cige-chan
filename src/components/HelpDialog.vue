@@ -36,7 +36,7 @@ const BLOCKS = [
   ['p-warn', 'aiDisclaimer'],
 ];
 
-const icon = document.querySelector('link[rel="icon"]')?.href || '';
+const icon = import.meta.env.BASE_URL + 'favicon.png';
 </script>
 
 <template>
