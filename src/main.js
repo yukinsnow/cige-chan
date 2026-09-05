@@ -6,6 +6,10 @@ import { toast } from './ui/toast.js';
 import { closeDialog } from './ui/dialogs.js';
 import { closeAllMenus } from './ui/menu.js';
 import { TAURI, download, downloadBinary } from './platform/save.js';
+import { isDesktopApp, isMac } from './platform/env.js';
+import { initTips } from './ui/tip.js';
+import { openCtx, closeCtx } from './ui/ctxmenu.js';
+import { bindExternalLinks } from './platform/link.js';
 import { applyAccent, applyBg, loadBgImage } from './core/theme.js';
 import { pick } from './platform/open.js';
 import { aiClosePanel } from './ai.js';
@@ -23,7 +27,7 @@ import { MIDI_KS, parseMidiFile, collectNoteOns, midiNotesToSections, keyswitchT
 function applyTxt(text){
   const { title, secs } = parseTxt(text);
   if(!secs.length){ toast(t("toastNoParse")); return; }
-  if(title){ state.title = title; $("#title").value = title; }
+  if(title) state.title = title;
   state.sections = secs; normAll(); redraw();
   toast(t("toastImported", secs.length, secs.reduce((a,s)=>a+s.lines.length,0)));
 }
@@ -225,15 +229,44 @@ addEventListener("drop",e=>{ e.preventDefault(); dc = 0; ui.dragging = false;
 
 /* ================= 头部下拉菜单（导入/导出/语言） =================
    触发按钮点一下切换显示，点菜单里任意按钮或点菜单外任何地方都收起来，
-   Escape 也收起（跟已有的 help/exp/bgPanel 弹窗共用下面那个 Escape 监听）。 */
+   Escape 也收起（跟已有的 help/exp/settings 弹窗共用下面那个 Escape 监听）。 */
 /* ================= 语言切换 ================= */
 /* ================= boot ================= */
 // 挂载必须在 await 之后 否则首帧没有文案
+// 桌面端用自绘右键菜单代替 webview 那个：原生菜单的外观由系统定，
+// 在无边框窗口里格外突兀。浏览器版不动它，那里用户预期就是原生菜单。
+if(TAURI){
+  addEventListener("contextmenu", e => { e.preventDefault(); openCtx(e); });
+  addEventListener("keydown", e => { if(e.key === "Escape") closeCtx(); });
+  addEventListener("blur", closeCtx);
+}
+
+// 桌面客户端才有窗口按钮 顶栏要给它预留内边距
+if(isDesktopApp){
+  document.documentElement.classList.add("wctl-on");
+  if(isMac) document.documentElement.classList.add("is-mac");
+}
+addEventListener("blur", ()=>document.documentElement.classList.add("unfocused"));
+addEventListener("focus", ()=>document.documentElement.classList.remove("unfocused"));
+
+// 界面文字可以手动划选复制 但 Ctrl+A 不该全选整个界面 只在输入框里放行
+addEventListener("keydown", e => {
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a"){
+    const el = document.activeElement;
+    if(!el || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) e.preventDefault();
+  }
+});
+
+initTips();
+bindExternalLinks();
+
 async function boot(){
   await loadLocales();
   load();
   if(!state.exp) state.exp = {alts:false, note:false};
   normAll();
+  if(state.theme === "paper") state.theme = "light";   // 2.x 存下来的旧值
+  if(!["system","light","dark"].includes(state.theme)) state.theme = "system";
   if(!state.bg) state.bg = {mode:"none", color:"#1a1614", dim:.55, blur:0};
   if(state.bg.mode === "image" && !ui.bgImg) state.bg.mode = "none";   // 图片没存住就退回默认
   if(!I18N[state.lang]) state.lang = "zh";
@@ -254,7 +287,7 @@ async function boot(){
     onNew: newProject, onOpenProj: ()=>openText("json"), onSaveProj: expProj,
     onImpTxt: ()=>openText("txt"), onImpMidi: openMidi,
     onExpPat: expPat, onExpMidiClean: expMidiClean, onExpMidiLyr: expMidiLyr,
-    onReflow: reflow, onCell: d=>setCell(state.cell + d),
+    onReflow: reflow,
   }).mount('#app');
   setCell(state.cell);
 }

@@ -33,7 +33,7 @@ import { toast } from './ui/toast.js';
 const AI_STORE_KEY = "cige.ai.v1";
 
 /* ---------- 设置（只存本机） ---------- */
-const aiCfg = reactive({ baseUrl: "", apiKey: "", model: "", style: "", maxTokens: 3000, temperature: 0.9, scope: "all" });
+const aiCfg = reactive({ baseUrl: "", apiKey: "", model: "", style: "", maxTokens: 3000, temperature: 0.9, scope: "all", agreed: false });
 try{
   const s = localStorage.getItem(AI_STORE_KEY);
   if(s){ const o = JSON.parse(s); if(o && typeof o === "object") Object.assign(aiCfg, o); }

@@ -2,20 +2,22 @@
 import { computed, watch } from 'vue';
 import { state } from '../core/state.js';
 import { t } from '../i18n/index.js';
-import { aiCfg, aiUi, aiClosePanel, aiRunAll, aiTest, aiStop, aiPendingLines, aiSaveCfg } from '../ai.js';
+import { aiCfg, aiUi, aiClosePanel, aiRunAll, aiStop, aiPendingLines, aiSaveCfg } from '../ai.js';
+import { ui } from '../core/state.js';
+import { openDialog } from '../ui/dialogs.js';
 
-const cfg = key => computed({
-  get: () => aiCfg[key],
-  set: v => { aiCfg[key] = v; aiSaveCfg(); },
-});
-const num = key => computed({
-  get: () => aiCfg[key],
-  set: v => { aiCfg[key] = +v; aiSaveCfg(); },
-});
+const openLlm = () => { ui.settingsTab = 'llm'; openDialog('settings'); };
+import Icon from './Icon.vue';
+import { Settings } from 'lucide';
 
-const baseUrl = cfg('baseUrl'), apiKey = cfg('apiKey'), model = cfg('model'), style = cfg('style');
-const maxTokens = num('maxTokens'), temperature = num('temperature');
-const scope = cfg('scope');
+const scope = computed({
+  get: () => aiCfg.scope,
+  set: v => { aiCfg.scope = v; aiSaveCfg(); },
+});
+const style = computed({
+  get: () => aiCfg.style,
+  set: v => { aiCfg.style = v; aiSaveCfg(); },
+});
 
 // 段落名可能改过，下拉每次跟着 state 重算
 const scopes = computed(() => [
@@ -26,6 +28,7 @@ const pending = computed(() => {
   const n = aiPendingLines().length;
   return n ? t('aiPending', n) : t('aiPendingNone');
 });
+const ready = computed(() => !!(aiCfg.agreed && aiCfg.baseUrl && aiCfg.apiKey && aiCfg.model));
 const pct = computed(() => aiUi.total > 0 ? Math.round(aiUi.done / aiUi.total * 100) : 0);
 const progText = computed(() => aiUi.msg || t('aiProg', aiUi.done, aiUi.total));
 
@@ -38,22 +41,16 @@ watch(scopes, list => {
 <template>
   <div id="aip" :class="{ show: aiUi.shown }" @click.self="aiClosePanel">
     <div class="card">
-      <h3>{{ t('aiTitle') }}</h3>
+      <div class="chead"><h3>{{ t('aiTitle') }}</h3></div>
+      <div class="cbody">
       <p>{{ t('aiIntro') }}</p>
-      <p class="aihint" style="margin:-6px 0 12px" v-html="t('aiDisclaimer')"></p>
 
-      <div class="airow"><label>{{ t('aiUrlLabel') }}</label>
-        <input type="text" v-model="baseUrl" :disabled="aiUi.busy"
-               placeholder="https://api.example.com/v1" spellcheck="false" autocomplete="off">
-        <span class="aihint">{{ t('aiUrlHint') }}</span></div>
-      <div class="airow"><label>{{ t('aiKeyLabel') }}</label>
-        <input type="password" v-model="apiKey" :disabled="aiUi.busy"
-               placeholder="sk-…" spellcheck="false" autocomplete="off">
-        <span class="aihint">{{ t('aiKeyHint') }}</span></div>
-      <div class="airow"><label>{{ t('aiModelLabel') }}</label>
-        <input type="text" v-model="model" :disabled="aiUi.busy"
-               placeholder="gpt-4o-mini / deepseek-chat / …" spellcheck="false" autocomplete="off">
-        <span class="aihint">{{ t('aiModelHint') }}</span></div>
+      <!-- 接口没配全时不让点填词，直接把人带去设置 -->
+      <p v-if="!ready" class="ainote">
+        {{ t('aiToastNeedCfg') }}
+        <button style="margin-left:6px" @click="openLlm">
+          <Icon :node="Settings" :size="13" /> {{ t('setLlm') }}</button>
+      </p>
 
       <div class="airow"><label>{{ t('aiStyleLabel') }}</label>
         <textarea v-model="style" rows="3" :disabled="aiUi.busy" :placeholder="t('aiStylePh')"></textarea>
@@ -64,33 +61,29 @@ watch(scopes, list => {
           <option v-for="o in scopes" :key="o.v" :value="o.v">{{ o.label }}</option>
         </select>
         <span class="aihint">{{ pending }}</span></div>
+      </div>
 
-      <h4>{{ t('aiAdvH4') }}</h4>
-      <div class="airow aiadv"><label>{{ t('aiMaxTokensLabel') }}</label>
-        <input type="range" min="500" max="8000" step="100" v-model="maxTokens" :disabled="aiUi.busy">
-        <b>{{ maxTokens }}</b></div>
-      <div class="airow aiadv"><label>{{ t('aiTemperatureLabel') }}</label>
-        <input type="range" min="0" max="2" step="0.1" v-model="temperature" :disabled="aiUi.busy">
-        <b>{{ Number(temperature).toFixed(1) }}</b></div>
+      <!-- 进度和日志固定在底部：跑起来的时候不该跟着内容滚走 -->
+      <div v-if="aiUi.total || aiUi.log.length" class="airun">
+        <div v-if="aiUi.total" class="aiprog">
+          <div class="aibar"><div :style="{ width: pct + '%' }"></div></div>
+          <span class="aiptext">{{ progText }}</span>
+        </div>
+        <div v-if="aiUi.log.length" class="ailog">
+          <div v-for="(row, i) in aiUi.log" :key="i" class="ailog-row">{{ row }}</div>
+        </div>
+      </div>
 
-      <div class="aibtns">
+      <div class="cfoot aibtns">
+        <button class="cclose" :data-tip="t('setLlm')" style="margin-right:auto" @click="openLlm">
+          <Icon :node="Settings" :size="15" /></button>
         <template v-if="!aiUi.busy">
-          <button class="pri" @click="aiRunAll('fill')">{{ t('aiGo') }}</button>
-          <button @click="aiRunAll('check')">{{ t('aiCheckBtn') }}</button>
-          <button :disabled="aiUi.testing" @click="aiTest">
-            {{ aiUi.testing ? t('aiTesting') : t('aiTestBtn') }}</button>
+          <button class="pri" :disabled="!ready" @click="aiRunAll('fill')">{{ t('aiGo') }}</button>
+          <button :disabled="!ready" @click="aiRunAll('check')">{{ t('aiCheckBtn') }}</button>
         </template>
         <button v-else class="stop" @click="aiStop">
           {{ aiUi.stopping ? t('aiStopping') : t('aiStop') }}</button>
         <button :disabled="aiUi.busy" @click="aiClosePanel">{{ t('aiClose') }}</button>
-      </div>
-
-      <div v-if="aiUi.total" class="aiprog">
-        <div class="aibar"><div :style="{ width: pct + '%' }"></div></div>
-        <span class="aiptext">{{ progText }}</span>
-      </div>
-      <div class="ailog">
-        <div v-for="(row, i) in aiUi.log" :key="i" class="ailog-row">{{ row }}</div>
       </div>
     </div>
   </div>

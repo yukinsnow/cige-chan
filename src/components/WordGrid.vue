@@ -7,6 +7,8 @@ import { t } from '../i18n/index.js';
 import { save } from '../core/persist.js';
 import { $, el } from '../ui/dom.js';
 import { toast } from '../ui/toast.js';
+import { iconEl } from '../ui/icon.js';
+import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Copy, X, Minus, Plus, Split } from 'lucide';
 
 let focusRef = null;      // {si,li,pos}
 let composing = false;
@@ -27,11 +29,11 @@ function render(){
     meta.textContent = t("secMeta", sec.lines.length, sec.lines.reduce((a,l)=>a+cap(l),0));
     head.appendChild(meta);
     const st = el("div","sectools");
-    st.appendChild(btn("↑",t("secUp"),()=>moveSec(si,-1)));
-    st.appendChild(btn("↓",t("secDown"),()=>moveSec(si,1)));
-    st.appendChild(btn("⧉",t("secDup"),()=>{ state.sections.splice(si+1,0,JSON.parse(JSON.stringify(sec))); render(); }));
+    st.appendChild(btn(ArrowUp,t("secUp"),()=>moveSec(si,-1)));
+    st.appendChild(btn(ArrowDown,t("secDown"),()=>moveSec(si,1)));
+    st.appendChild(btn(Copy,t("secDup"),()=>{ state.sections.splice(si+1,0,JSON.parse(JSON.stringify(sec))); render(); }));
     st.appendChild(btn(t("secAdd"),t("secAddTitle"),()=>{ state.sections.splice(si+1,0,{name:t("newSectionName"),lines:[newLine()]}); render(); }));
-    st.appendChild(btn("✕",t("secDel"),()=>{ if(confirm(t("confirmDeleteSec",sec.name))){ state.sections.splice(si,1); render(); } }));
+    st.appendChild(btn(X,t("secDel"),()=>{ if(confirm(t("confirmDeleteSec",sec.name))){ state.sections.splice(si,1); render(); } }));
     head.appendChild(st);
     S.appendChild(head);
 
@@ -52,14 +54,18 @@ function render(){
   restoreFocus(); save();
 }
 
-function btn(txt,title,fn){ const b = el("button"); b.textContent = txt; b.title = title; b.onclick = fn; return b; }
+function btn(icon,title,fn){
+  const b = el("button"); b.dataset.tip = title; b.onclick = fn;
+  if(typeof icon === "string") b.textContent = icon; else b.appendChild(iconEl(icon));
+  return b;
+}
 
 function rowEl(sec,si,L,li){
   const R = el("div","row"); R.dataset.si = si; R.dataset.li = li;
 
   const ln = el("div","ln"); ln.textContent = li+1; R.appendChild(ln);
 
-  const pat = el("button","pat"); pat.textContent = L.g.join("/"); pat.title = t("patTitle");
+  const pat = el("button","pat"); pat.textContent = L.g.join("/"); pat.dataset.tip = t("patTitle");
   pat.onclick = ()=>editPattern(pat,L); R.appendChild(pat);
 
   const wrap = el("div","wrap");
@@ -82,18 +88,18 @@ function rowEl(sec,si,L,li){
   const cnt = el("div","cnt"); R.appendChild(cnt);
 
   const tools = el("div","tools");
-  tools.appendChild(btn("−",t("rowMinusTitle"),()=>{ chg(L,-1,curPos); redrawRow(si,li,curPos); }));
-  tools.appendChild(btn("+",t("rowPlusTitle"),()=>{ chg(L,1,curPos); redrawRow(si,li,curPos); }));
-  tools.appendChild(btn("／",t("rowSplitTitle"),()=>{ const m = splitAt(L,curPos); redrawRow(si,li,curPos); if(m) toast(m); }));
+  tools.appendChild(btn(Minus,t("rowMinusTitle"),()=>{ chg(L,-1,curPos); redrawRow(si,li,curPos); }));
+  tools.appendChild(btn(Plus,t("rowPlusTitle"),()=>{ chg(L,1,curPos); redrawRow(si,li,curPos); }));
+  tools.appendChild(btn(Split,t("rowSplitTitle"),()=>{ const m = splitAt(L,curPos); redrawRow(si,li,curPos); if(m) toast(m); }));
   // 整句左右挪一格，跟 Alt+←/→ 同一个操作——手机上没有 Alt 键，只能靠这两个按钮
-  tools.appendChild(btn("←",t("rowShiftLeftTitle"),()=>{
+  tools.appendChild(btn(ArrowLeft,t("rowShiftLeftTitle"),()=>{
     const blocked = shiftLine(L,-1); if(blocked){ toast(blocked); return; }
     redrawRow(si,li,Math.max(0,curPos-1)); }));
-  tools.appendChild(btn("→",t("rowShiftRightTitle"),()=>{
+  tools.appendChild(btn(ArrowRight,t("rowShiftRightTitle"),()=>{
     const blocked = shiftLine(L,1); if(blocked){ toast(blocked); return; }
     redrawRow(si,li,Math.min(curPos+1,cap(L))); }));
-  tools.appendChild(btn("⧉",t("rowDupTitle"),()=>{ sec.lines.splice(li+1,0,newLine(L.g)); focusRef={si,li:li+1,pos:0}; render(); }));
-  tools.appendChild(btn("✕",t("rowDelTitle"),()=>{ sec.lines.splice(li,1); if(!sec.lines.length) sec.lines.push(newLine()); focusRef={si,li:Math.max(0,li-1),pos:0}; render(); }));
+  tools.appendChild(btn(Copy,t("rowDupTitle"),()=>{ sec.lines.splice(li+1,0,newLine(L.g)); focusRef={si,li:li+1,pos:0}; render(); }));
+  tools.appendChild(btn(X,t("rowDelTitle"),()=>{ sec.lines.splice(li,1); if(!sec.lines.length) sec.lines.push(newLine()); focusRef={si,li:Math.max(0,li-1),pos:0}; render(); }));
   R.appendChild(tools);
 
   /* ---- 备选版本 + 备注 ---- */
@@ -114,7 +120,7 @@ function rowEl(sec,si,L,li){
 
     if(unsaved){
       const c = el("button","vc on"); c.textContent = t("unsavedPrefix") + short(cur);
-      c.title = t("unsavedTitle", cur);
+      c.dataset.tip = t("unsavedTitle", cur);
       vw.appendChild(c);
     }
 
@@ -122,12 +128,12 @@ function rowEl(sec,si,L,li){
       const on = txt === cur;
       const c = el("button","vc" + (on ? " on" : ""));
       c.textContent = (i+1) + "· " + (short(txt) || t("versionEmpty"));
-      c.title = (on ? t("versionCurrentTitle") : t("versionSwitchTitle")) + txt;
+      c.dataset.tip = (on ? t("versionCurrentTitle") : t("versionSwitchTitle")) + txt;
       if(!on) c.onclick = ()=>{
         if(cur && !L.alts.includes(cur)) L.alts.push(cur);   // 先把未存的写法保住，绝不丢稿
         L.t = txt; redrawRow(si,li,0); toast(t("toastSwitchedVersion", i+1));
       };
-      const x = el("span","vx"); x.textContent = "×"; x.title = t("versionDeleteTitle");
+      const x = el("span","vx"); x.textContent = "×"; x.dataset.tip = t("versionDeleteTitle");
       x.onclick = e=>{ e.stopPropagation(); L.alts.splice(i,1); redrawRow(si,li,curPos); };
       c.appendChild(x);
       vw.appendChild(c);

@@ -2,6 +2,8 @@
 import { ui } from '../core/state.js';
 import { t } from '../i18n/index.js';
 import { closeDialog } from '../ui/dialogs.js';
+import Icon from './Icon.vue';
+import { X } from 'lucide';
 
 const PRE = `[Verse]
 XXXX XXX
@@ -36,17 +38,18 @@ const BLOCKS = [
   ['p-warn', 'aiDisclaimer'],
 ];
 
-const icon = import.meta.env.BASE_URL + 'favicon.png';
+const icon = import.meta.env.BASE_URL + 'logo.png';
 </script>
 
 <template>
   <div id="help" :class="{ show: ui.dialog === 'help' }" @click.self="closeDialog">
     <div class="card">
-      <div class="cardhead">
+      <div class="chead">
         <img class="logo" :src="icon" alt="">
         <h3>{{ t('helpTitleFull') }}</h3>
+        <button class="cclose" :data-tip="t('helpClose')" @click="closeDialog"><Icon :node="X" :size="15" /></button>
       </div>
-
+      <div class="cbody">
       <template v-for="(b, i) in BLOCKS" :key="i">
         <pre v-if="b[0] === 'pre'">{{ PRE }}</pre>
         <ul v-else-if="b[0] === 'ul'">
@@ -64,7 +67,7 @@ const icon = import.meta.env.BASE_URL + 'favicon.png';
         <a class="me" href="https://response.run/" target="_blank" rel="noopener">response.run</a>
       </p>
 
-      <p style="text-align:right;margin-top:20px"><button @click="closeDialog">{{ t('helpClose') }}</button></p>
+      </div>
     </div>
   </div>
 </template>

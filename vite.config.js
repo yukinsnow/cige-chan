@@ -1,9 +1,11 @@
+import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 
 /* tauri android dev 要让手机访问到这台机器的 dev server，
    @tauri-apps/cli 会把地址放进 TAURI_DEV_HOST，没有它就只听本机。 */
 const host = process.env.TAURI_DEV_HOST;
+const version = JSON.parse(readFileSync('package.json','utf8')).version;
 
 export default defineConfig({
   plugins: [vue()],
@@ -17,6 +19,7 @@ export default defineConfig({
     hmr: host ? { protocol: 'ws', host, port: 1421 } : undefined,
     watch: { ignored: ['**/src-tauri/**'] },
   },
+  define: { __APP_VERSION__: JSON.stringify(version) },
   envPrefix: ['VITE_', 'TAURI_ENV_*'],
   build: {
     /* 安卓 WebView 版本参差，显式指定，别依赖默认值 */

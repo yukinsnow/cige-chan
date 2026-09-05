@@ -6,13 +6,13 @@ const SAMPLE = [
   {name:"Chorus",  lines:[{g:[5,3],t:""},{g:[4,4],t:""},{g:[5,3],t:""},{g:[6],t:""}]}
 ];
 // 别对 state 子对象做身份比较（=== / Set / indexOf）proxy 会破坏
-const state = reactive({ title:"未命名歌曲", sections:JSON.parse(JSON.stringify(SAMPLE)), cell:44, theme:"dark", lang:"zh", accent:"auto",
+const state = reactive({ title:"未命名歌曲", sections:JSON.parse(JSON.stringify(SAMPLE)), cell:44, theme:"system", lang:"zh", accent:"auto",
                exp:{alts:false,note:false}, bg:{mode:"none", color:"#1a1614", dim:.55, blur:0} });
 
 // 界面状态 不持久化
 let bg = "";
 try{ bg = localStorage.getItem("cige.bg") || ""; }catch(e){}
-const ui = reactive({ savedAt: null, saveFailed: false, dialog: null, bgImg: bg, dragging: false, rev: 0 });
+const ui = reactive({ savedAt: null, saveFailed: false, dialog: null, bgImg: bg, dragging: false, rev: 0, sysDark: false, settingsTab: 'look' });
 
 /* 一句的结构：{ g:[分句字数], t:当前版本文字, alts:[其它备选版本], note:备注 } */
 function newLine(g){ return {g:[...(g||[7])], t:"", alts:[], note:""}; }

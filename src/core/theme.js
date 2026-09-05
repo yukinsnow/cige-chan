@@ -1,20 +1,26 @@
 import { state, ui } from './state.js';
 import { save } from './persist.js';
+
+const mq = matchMedia('(prefers-color-scheme: dark)');
+ui.sysDark = mq.matches;
+mq.addEventListener('change', e => { ui.sysDark = e.matches; applyBg(); });
+
+const isDark = () => state.theme === 'system' ? ui.sysDark : state.theme === 'dark';
 import { t } from '../i18n/index.js';
 import { $ } from '../ui/dom.js';
 import { toast } from '../ui/toast.js';
 
 /* ---------- 主题色（换色调） ---------- */
 const ACCENTS = [
-  { id:"auto",   dark:"#e0a83f", paper:"#a8632a" },   // 原版配色
-  { id:"blue",   dark:"#5ab4d8", paper:"#3389D1" },
-  { id:"green",  dark:"#7fbf8e", paper:"#3e7d4f" },
-  { id:"violet", dark:"#b39ddb", paper:"#6a4fa3" },
-  { id:"rose",   dark:"#e08a97", paper:"#b5485d" },
-  { id:"cyan",   dark:"#6fd6c8", paper:"#2a8f85" },
-  { id:"orange", dark:"#f0a35e", paper:"#c96f1f" },
-  { id:"slate",  dark:"#9aa7b5", paper:"#5a6673" },
-  { id:"red",    dark:"#e06655", paper:"#b03a2e" },
+  { id:"auto",   dark:"#e8b457", light:"#a8632a" },  // 跟主题自带的强调色一致
+  { id:"blue",   dark:"#5ab4d8", light:"#3389D1" },
+  { id:"green",  dark:"#7fbf8e", light:"#3e7d4f" },
+  { id:"violet", dark:"#b39ddb", light:"#6a4fa3" },
+  { id:"rose",   dark:"#e08a97", light:"#b5485d" },
+  { id:"cyan",   dark:"#6fd6c8", light:"#2a8f85" },
+  { id:"orange", dark:"#f0a35e", light:"#c96f1f" },
+  { id:"slate",  dark:"#9aa7b5", light:"#5a6673" },
+  { id:"red",    dark:"#e06655", light:"#b03a2e" },
 ];
 
 function applyAccent(){
@@ -33,7 +39,9 @@ function saveBg(){
 function applyBg(){
   const b = state.bg, root = document.documentElement;
   const img = $("#bgimg"), mask = $("#bgmask");
-  root.dataset.theme = state.theme;
+  // 跟随系统时不设 data-theme，交给 CSS 里的 prefers-color-scheme
+  if(state.theme === "system") delete root.dataset.theme;
+  else root.dataset.theme = state.theme;
   if(b.mode === "image" && ui.bgImg){
     img.style.backgroundImage = 'url("' + ui.bgImg + '")';
     img.style.backgroundColor = "";
@@ -67,7 +75,7 @@ const SWATCH = ["#12100e","#1b2430","#24201a","#2b2430","#e9e2d3","#f0ece1","#df
 
 function setBgColor(c){
   state.bg.color = c; state.bg.mode = "color";
-  state.theme = lum(c) > .5 ? "paper" : "dark";   // 亮底自动配深色字，反之亦然
+  state.theme = lum(c) > .5 ? "light" : "dark";   // 亮底自动配深色字，反之亦然
   applyBg(); save();
 }
 
@@ -95,4 +103,4 @@ function loadBgImage(file){
   fr.readAsDataURL(file);
 }
 
-export { ACCENTS, SWATCH, lum, applyAccent, applyBg, saveBg, setBgColor, loadBgImage };
+export { ACCENTS, SWATCH, lum, isDark, applyAccent, applyBg, saveBg, setBgColor, loadBgImage };

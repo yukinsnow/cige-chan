@@ -37,7 +37,8 @@ function go() {
 <template>
   <div id="exp" :class="{ show: ui.dialog === 'exp' }" @click.self="closeDialog">
     <div class="card">
-      <h3>{{ t('expTitle') }}</h3>
+      <div class="chead"><h3>{{ t('expTitle') }}</h3></div>
+      <div class="cbody">
       <p style="margin-bottom:14px">{{ t('expIntro') }}</p>
       <label class="ck">
         <input type="checkbox" v-model="alts">
@@ -48,10 +49,11 @@ function go() {
         <span><span>{{ t('expCk2Label') }}</span><i>{{ t('expCk2Desc') }}</i></span>
       </label>
       <div class="prev">{{ preview }}</div>
-      <p style="text-align:right;margin-top:16px">
+      </div>
+      <div class="cfoot">
         <button @click="closeDialog">{{ t('expCancel') }}</button>
         <button class="pri" @click="go">{{ t('expGo') }}</button>
-      </p>
+      </div>
     </div>
   </div>
 </template>

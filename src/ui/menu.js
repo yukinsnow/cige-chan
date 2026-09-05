@@ -18,6 +18,9 @@ function positionMenu(menu) {
   if (r2.left < pad) menu.style.left = (parseFloat(menu.style.left) + (pad - r2.left)) + 'px';
 }
 
+// 点菜单外任何地方都收起。toggleMenu 里 stopPropagation 挡住了触发按钮自己
+addEventListener('click', closeAllMenus);
+
 export function toggleMenu(e, menuId) {
   e.stopPropagation();
   const menu = $('#' + menuId), btn = e.currentTarget;
