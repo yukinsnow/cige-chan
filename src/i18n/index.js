@@ -1,6 +1,3 @@
-/* 文案入口。t() 按 state.lang 取当前语言的那份文案。
- */
-
 import { state } from '../core/state.js';
 export { I18N } from './dict.js';
 import { I18N } from './dict.js';

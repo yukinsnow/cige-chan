@@ -1,9 +1,3 @@
-/* 格子切分与索引换算。纯函数，不依赖 state、i18n、DOM。
- *
- * 注意 CL 不是 Unicode 字素簇切分，别想当然换成 Intl.Segmenter：拗音
- * （きゃ）和半角浊点（ﾃﾞ）在 Unicode 里都是两个独立字素簇，Segmenter 不会
- * 合并，而词格要求它们共占一格。这是领域规则，不是标准算法。 */
-
 const cap = L => L.g.reduce((a,b)=>a+b,0);
 
 /* 一句的文字里允许出现空格，代表「这个格子先空着」——
@@ -27,6 +21,7 @@ const DAKU = new Set([..."ﾞﾟ゙゚"]);
    下一个分句又是拗音开头，这个拗音会拼到上一分句的最后一格里，
    显示上多算进前一段——概率很低（正常日语没人会拿拗音开头分句），
    暂时按已知限制处理，没有强行按 g 分段去堵这个口子。 */
+// 拗音和半角浊点在 Unicode 里是两个字素簇 Intl.Segmenter 不会合并 别换
 function CL(s){
   const out = [];
   for(const c of String(s)){

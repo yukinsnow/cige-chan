@@ -1,6 +1,3 @@
-/* 词格 TXT 与歌词文本的解析和导出。
- */
-
 import { CL, RT } from './clusters.js';
 import { state } from './state.js';
 import { t } from '../i18n/index.js';
@@ -13,18 +10,13 @@ const HEAD_RE = /^\s*(?:[\[【(（#＃]\s*)?((?:pre[\s-]?chorus|verse|chorus|bri
    只认"贴在行尾"的括号，行首或行中的括号仍然当成普通标点（见 06 号用例），
    这样才不会跟原有的"括号里的字也算歌词"行为冲突。 */
 const NOTE_RE = /[（(]\s*([^（）()]*?)\s*[）)]\s*$/;
-/* 歌词导出时开头那行《歌名》。以前它不被识别，会掉进 parseContentLine，
-   《》被 PUNCT_RE 吃掉后变成「段落 1」里的一句词，而 state.title 不受影响，
-   于是每导出再导入一轮就多长一段标题。只认第一行非空行，免得吃掉歌词里的书名号。 */
+// 只认第一行 否则会吃掉歌词正文里的书名号
 const TITLE_RE = /^《\s*(.*?)\s*》$/;
 
-/* 一句里的多个备选版本导出时用 ※ 隔开。不能用 / ｜ 这些——它们是分句
-   分隔符，数字词格 4/5/6 的写法还依赖着。※ 不在分句分隔符里，也不被
-   PUNCT_RE 和 PH_RE 碰到，所以能安全地当第二层分隔符。 */
+// 不能用 / ｜ 那些 它们是分句分隔符 数字词格 4/5/6 还依赖着
 const ALT_SEP = "※";
 
-/* 把一段"分句 分句 分句"切成格数和文字。备选版本共用当前版本的 L.g，
-   所以只有第一段的 g 有用，备选那几段只取文字。 */
+// 备选共用当前版本的 L.g 所以只有第一段的 g 有用
 function splitCells(s){
   const toks = s.split(/[\s　|｜/／]+/).filter(Boolean);
   const g = []; let t = "";
@@ -102,8 +94,7 @@ function lineOut(L,o){
   const cur = RT(L.t);
   const list = o.alts ? [cur, ...L.alts.filter(x=>x !== cur)] : [cur];
   let s = list.filter(x=>x).map(x=>groupOut(x,L.g)).filter(x=>x).join(ALT_SEP);
-  /* 一整句都还没填时以前输出空串，而空行在 parseTxt 里是段落分隔符：导出再
-     导入会在这里断成两段，格数也丢了。退回词格的 XXXX 写法，PH_RE 认得。 */
+  // 空行在 parseTxt 里是段落分隔符 整句未填必须退回 XXXX 否则导入时会断段
   if(!s) s = L.g.map(n=>"X".repeat(n)).join(" ");
   if(o.note && L.note) s += "（" + L.note + "）";
   return s;

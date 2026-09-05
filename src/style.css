@@ -199,6 +199,8 @@ main{max-width:1080px;margin:0 auto;padding:26px calc(20px + var(--sar)) calc(16
 
 footer{position:fixed;bottom:0;left:0;right:0;background:var(--panel);border-top:1px solid var(--line);padding:8px calc(18px + var(--sar)) calc(8px + var(--sab)) calc(18px + var(--sal));font-size:12px;color:var(--dim);display:flex;gap:18px;align-items:center;flex-wrap:wrap;z-index:20}
 footer b{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
+.stats{display:contents}
+.credits{display:contents}
 .bar-r{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .dot{width:3px;height:3px;border-radius:50%;background:var(--line);flex:none}
 .me{display:inline-flex;align-items:center;gap:4px;color:var(--dim);text-decoration:none;font-size:12px;padding:2px 6px;border-radius:6px;border:1px solid transparent;transition:.12s}
@@ -213,9 +215,9 @@ footer b{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
 .ainote{margin-top:22px;padding:10px 12px;border:1px dashed var(--line);border-radius:8px;color:var(--dim);font-size:12px;line-height:1.7}
 .ainote a{color:var(--accent)}
 
-#help,#exp,#bgp{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:none;align-items:center;justify-content:center;padding:calc(20px + var(--sat)) 20px calc(20px + var(--sab))}
-#help.show,#exp.show,#bgp.show{display:flex}
-#exp .card,#bgp .card{max-width:520px}
+#help,#exp,#bgPanel{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:none;align-items:center;justify-content:center;padding:calc(20px + var(--sat)) 20px calc(20px + var(--sab))}
+#help.show,#exp.show,#bgPanel.show{display:flex}
+#exp .card,#bgPanel .card{max-width:520px}
 
 /* 背景设置面板 */
 .bgrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
@@ -265,13 +267,13 @@ pre{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padd
 .aibtns .stop{border-color:var(--ovf);color:var(--ovf);font-weight:600}
 .aibtns .stop:hover{border-color:var(--ovf);color:var(--ovf);background:rgba(229,106,74,.12)}
 /* 顶栏 AI 按钮：运行中亮起呼吸点，提示后台还有任务在跑 */
-#aibtn.ai-running{border-color:var(--accent);color:var(--accent);position:relative;padding-left:24px}
-#aibtn.ai-running::before{content:"";position:absolute;left:9px;top:50%;transform:translateY(-50%);
+button.ai-running{border-color:var(--accent);color:var(--accent);position:relative;padding-left:24px}
+button.ai-running::before{content:"";position:absolute;left:9px;top:50%;transform:translateY(-50%);
   width:8px;height:8px;border-radius:50%;background:var(--accent);animation:aiPulse 1.2s ease-in-out infinite}
 @keyframes aiPulse{0%,100%{opacity:.35;transform:translateY(-50%) scale(.8)}50%{opacity:1;transform:translateY(-50%) scale(1.15)}}
 .aiprog{display:flex;align-items:center;gap:10px;margin-top:12px}
 .aibar{flex:1;height:8px;border-radius:5px;background:var(--panel2);border:1px solid var(--line);overflow:hidden}
-#aifillbar{height:100%;width:0;background:var(--accent);border-radius:5px;transition:width .25s}
+.aibar>div{height:100%;width:0;background:var(--accent);border-radius:5px;transition:width .25s}
 .aiptext{font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums;flex:none;max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ailog{margin-top:14px;max-height:180px;overflow:auto;background:var(--panel2);border:1px solid var(--line);
   border-radius:8px;padding:8px 10px;font-size:11.5px;line-height:1.7;color:var(--dim);
