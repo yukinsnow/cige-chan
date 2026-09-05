@@ -662,6 +662,29 @@ const HEAD_RE = /^\s*(?:[\[【(（#＃]\s*)?((?:pre[\s-]?chorus|verse|chorus|bri
    只认"贴在行尾"的括号，行首或行中的括号仍然当成普通标点（见 06 号用例），
    这样才不会跟原有的"括号里的字也算歌词"行为冲突。 */
 const NOTE_RE = /[（(]\s*([^（）()]*?)\s*[）)]\s*$/;
+/* 歌词导出时开头那行《歌名》。以前它不被识别，会掉进 parseContentLine，
+   《》被 PUNCT_RE 吃掉后变成「段落 1」里的一句词，而 state.title 不受影响，
+   于是每导出再导入一轮就多长一段标题。只认第一行非空行，免得吃掉歌词里的书名号。 */
+const TITLE_RE = /^《\s*(.*?)\s*》$/;
+
+/* 一句里的多个备选版本导出时用 ※ 隔开。不能用 / ｜ 这些——它们是分句
+   分隔符，数字词格 4/5/6 的写法还依赖着。※ 不在分句分隔符里，也不被
+   PUNCT_RE 和 PH_RE 碰到，所以能安全地当第二层分隔符。 */
+const ALT_SEP = "※";
+
+/* 把一段"分句 分句 分句"切成格数和文字。备选版本共用当前版本的 L.g，
+   所以只有第一段的 g 有用，备选那几段只取文字。 */
+function splitCells(s){
+  const toks = s.split(/[\s　|｜/／]+/).filter(Boolean);
+  const g = []; let t = "";
+  for(const tk of toks){
+    if(PH_RE.test(tk)){ g.push([...tk].length); continue; }
+    const clean = CL(tk.replace(PUNCT_RE,""));
+    if(!clean.length) continue;
+    g.push(clean.length); t += clean.join("");
+  }
+  return {g,t};
+}
 
 function parseContentLine(s){
   let note = "";
@@ -672,23 +695,19 @@ function parseContentLine(s){
     const g = s.split(/\D+/).filter(Boolean).map(Number).filter(n=>n>0);
     return g.length ? {g,t:"",alts:[],note} : null;
   }
-  const toks = s.split(/[\s　|｜/／]+/).filter(Boolean);
-  const g = []; let t = "";
-  for(const tk of toks){
-    if(PH_RE.test(tk)){ g.push([...tk].length); continue; }
-    const clean = CL(tk.replace(PUNCT_RE,""));
-    if(!clean.length) continue;
-    g.push(clean.length); t += clean.join("");
-  }
-  return g.length ? {g,t,alts:[],note} : null;
+  const parts = s.split(ALT_SEP).map(x=>x.trim()).filter(Boolean);
+  const { g, t } = splitCells(parts[0] || "");
+  const alts = parts.slice(1).map(x=>splitCells(x).t).filter(Boolean);
+  return g.length ? {g,t,alts,note} : null;
 }
 
 function parseTxt(text){
   const raw = text.replace(/\r/g,"").split("\n");
-  const secs = []; let cur = null;
+  const secs = []; let cur = null, title = "", first = true;
   for(const line of raw){
     const s = line.trim();
     if(!s){ if(cur && cur.lines.length) cur = null; continue; }
+    if(first){ first = false; const tm = s.match(TITLE_RE); if(tm){ title = tm[1]; continue; } }
     let name = null;
     const m = s.match(HEAD_RE);
     if(m) name = m[1].trim();
@@ -698,7 +717,7 @@ function parseTxt(text){
     const pl = parseContentLine(s);
     if(pl) cur.lines.push(pl);
   }
-  return secs.filter(x=>x.lines.length);
+  return {title, secs: secs.filter(x=>x.lines.length)};
 }
 
 function parseGroups(str){
@@ -1234,7 +1253,10 @@ function groupOut(text,g){
 function lineOut(L,o){
   const cur = RT(L.t);
   const list = o.alts ? [cur, ...L.alts.filter(x=>x !== cur)] : [cur];
-  let s = list.filter(x=>x).map(x=>groupOut(x,L.g)).filter(x=>x).join("/");
+  let s = list.filter(x=>x).map(x=>groupOut(x,L.g)).filter(x=>x).join(ALT_SEP);
+  /* 一整句都还没填时以前输出空串，而空行在 parseTxt 里是段落分隔符：导出再
+     导入会在这里断成两段，格数也丢了。退回词格的 XXXX 写法，PH_RE 认得。 */
+  if(!s) s = L.g.map(n=>"X".repeat(n)).join(" ");
   if(o.note && L.note) s += "（" + L.note + "）";
   return s;
 }
@@ -1245,8 +1267,9 @@ function lyrTxt(o){
 }
 
 function applyTxt(text){
-  const secs = parseTxt(text);
+  const { title, secs } = parseTxt(text);
   if(!secs.length){ toast(t("toastNoParse")); return; }
+  if(title){ state.title = title; $("#title").value = title; }
   state.sections = secs; normAll(); focusRef = null; render();
   toast(t("toastImported", secs.length, secs.reduce((a,s)=>a+s.lines.length,0)));
 }
