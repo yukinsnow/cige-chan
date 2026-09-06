@@ -5,6 +5,7 @@ import { t, LOCALE } from './i18n/index.js';
 import { save } from './core/persist.js';
 import { $, el } from './ui/dom.js';
 import { toast } from './ui/toast.js';
+import { ask } from './ui/confirm.js';
 
 /* ================= 词格酱 · AI 填词模块 =================
    支持任意「OpenAI 兼容」接口（各种中转站基本都是这个格式）：
@@ -265,7 +266,7 @@ async function aiRunAll(mode){
   }
   const scopeLines = aiLinesInScope();
   const todo = mode === "fill" ? scopeLines.filter(x => CL(RT(x.L.t)).length < cap(x.L)) : scopeLines;
-  if(mode === "fill" && !todo.length && !confirm(t("aiConfirmAllFilled"))) return;
+  if(mode === "fill" && !todo.length && !await ask(t("aiConfirmAllFilled"))) return;
 
   aiSaveCfg();
   aiAbort = { cancelled: false, ctrl: new AbortController() };

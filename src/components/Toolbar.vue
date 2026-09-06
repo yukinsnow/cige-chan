@@ -8,7 +8,7 @@ import { ChevronDown, CircleHelp, Settings } from 'lucide';
 
 defineProps({
   onNew: Function, onOpenProj: Function, onSaveProj: Function,
-  onImpTxt: Function, onImpMidi: Function,
+  onImpTxt: Function, onImpMidi: Function, onImpSvp: Function,
   onExpPat: Function, onExpMidiClean: Function, onExpMidiLyr: Function,
   onReflow: Function,
 });
@@ -33,6 +33,7 @@ function toggleAi() {
       <div class="menu" id="impMenu">
         <button @click="onImpTxt">{{ t('btnImpTxt') }}</button>
         <button :data-tip="t('btnImpMidiTitle')" @click="onImpMidi">{{ t('btnImpMidi') }}</button>
+        <button :data-tip="t('btnImpSvpTitle')" @click="onImpSvp">{{ t('btnImpSvp') }}</button>
       </div>
     </div>
 
@@ -42,6 +43,7 @@ function toggleAi() {
       <div class="menu" id="expMenu">
         <button class="pri" @click="openDialog('exp')">{{ t('btnExpLyr') }}</button>
         <button @click="onExpPat">{{ t('btnExpPat') }}</button>
+        <button :data-tip="t('btnExpLrcTitle')" @click="openDialog('lrc')">{{ t('btnExpLrc') }}</button>
         <div class="msep"></div>
         <button :data-tip="t('btnExpMidiCleanTitle')" @click="onExpMidiClean">{{ t('btnExpMidiClean') }}</button>
         <button :data-tip="t('btnExpMidiLyrTitle')" @click="onExpMidiLyr">{{ t('btnExpMidiLyr') }}</button>

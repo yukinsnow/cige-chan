@@ -8,6 +8,10 @@ import { closeAllMenus } from './ui/menu.js';
 import { TAURI, download, downloadBinary } from './platform/save.js';
 import { isDesktopApp, isMac } from './platform/env.js';
 import { initTips } from './ui/tip.js';
+import { ask } from './ui/confirm.js';
+import { askPick } from './ui/pick.js';
+import { parseSvp, svpTracks, svpToSections, svpMerge, svpBpm } from './core/svp.js';
+import { buildLrc, tickToSec } from './core/lrc.js';
 import { openCtx, closeCtx } from './ui/ctxmenu.js';
 import { maybeStartTour } from './ui/tour.js';
 import { initSliders } from './ui/slider.js';
@@ -38,7 +42,8 @@ function applyTxt(text){
    到时候需要导出的话重新导入一次 MIDI 即可。 */
 let midiImport = null;
 
-function applyMidi(buf){
+async function applyMidi(buf){
+  const only = takeTimingOnly();
   let parsed, notes, secs;
   try{
     parsed = parseMidiFile(buf);
@@ -46,10 +51,20 @@ function applyMidi(buf){
     secs = midiNotesToSections(notes);
   }catch(e){ toast(t("toastMidiParseFail", e.message)); return; }
   if(!secs.length){ toast(t("toastMidiNoStructure")); return; }
-  /* 整份文件一个 keyswitch 都没有：所有音符会挤成一句，导进来还得自己一句句
-     切开。先把话说清楚再让人决定，免得白导一次、还把当前内容顶掉。 */
-  if(!notes.some(n => MIDI_KS[n.note]) && !confirm(t("confirmMidiNoKs", notes.length))) return;
+
+  /* 整份文件一个 keyswitch 都没有：所有音符会挤成一句。先把话说清楚再让人决定，
+     免得白导一次、还把当前内容顶掉。Synthesizer V 工程（.svp）里连音有标记、
+     字数是准的，那条路比 MIDI 靠谱，提示里也指过去。 */
+  if(!notes.some(n => MIDI_KS[n.note]) && !await ask(t("confirmMidiNoKs", notes.length))) return;
+
+  const toSec = tickToSec(parsed);
+  const sung = notes.filter(n => MIDI_KS[n.note] === undefined);
+  const times = sung.map(n => toSec(n.tick));
+  // 一拍的秒数换算成 BPM，导出 LRC 时按拍微调偏移要用
+  const bpm = 60 / (toSec(parsed.division || 480) - toSec(0));
+  if(only){ useTiming("midi", times, bpm); return; }
   midiImport = {parsed, notes};
+  ui.timing = { src: "midi", times, bpm };
   state.sections = secs; normAll(); redraw();
   toast(t("toastMidiImported", secs.length, secs.reduce((a,s)=>a+s.lines.length,0)));
 }
@@ -134,9 +149,69 @@ function applyJson(text){
     redraw(); toast(t("toastProjectOpened"));
   }catch(e){ toast(t("toastInvalidProject")); }
 }
+/* .svp 是 Synthesizer V 工程，一个音符一个音节、连音有标记，
+   所以字数比 MIDI 准（MIDI 只能按音符数算，长音会多算）。
+   断句仍靠休止推断——SV 里也没有「这几个字是一句」的概念。 */
+// 秒 → m:ss，选轨时看进入时间比看秒数直观
+const mmss = s => Math.floor(s/60) + ":" + String(Math.round(s%60)).padStart(2,"0");
+// MIDI 音高 → 音名，60 是 C4
+const PITCH = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const midiName = p => PITCH[((p % 12) + 12) % 12] + (Math.floor(p / 12) - 1);
+
+/* 已经填好词、只想补时间戳时走这里：解析出时间就存，词格一个字都不碰。
+   格数对不上就拦住——那说明这份旋律跟当前词格不是一回事。 */
+let timingOnly = false;
+const takeTimingOnly = () => { const v = timingOnly; timingOnly = false; return v; };
+
+function useTiming(src, times, bpm){
+  const cells = state.sections.reduce((a,sec)=>
+    a + sec.lines.reduce((x,L)=>x + cap(L), 0), 0);
+  if(cells !== times.length){ toast(t("lrcMismatch", cells, times.length)); return false; }
+  ui.timing = { src, times, bpm };
+  toast(t("toastTimingRead", times.length));
+  return true;
+}
+
+async function applySvp(text){
+  const only = takeTimingOnly();
+  let j;
+  try{ j = parseSvp(text); }catch(e){ toast(t("toastSvpBad")); return; }
+  const tracks = svpTracks(j);
+  if(!tracks.length){ toast(t("toastSvpEmpty")); return; }
+  const cooked = tracks.map(tr => {
+    const secs = svpToSections(tr);
+    return { tr, secs, lines: secs.reduce((a,x)=>a+x.lines.length,0) };
+  });
+
+  /* 默认勾上字数最多的那条：主旋律通常字最多，和声只跟一部分。
+     进入时间不能当判据——这首歌的和声从第 1 秒就开始铺了。 */
+  const most = Math.max(...cooked.map(c => c.tr.chars.length));
+  const preset = cooked.map((c,i)=>[i,c]).filter(([,c])=>c.tr.chars.length === most).map(([i])=>i);
+
+  const picked = await askPick(t("svpPickTrack"),
+    cooked.map((c,i) => ({
+      v: i,
+      label: c.tr.name || ("#" + (c.tr.index + 1)),
+      desc: t("svpTrackDesc", c.tr.chars.length, c.secs.length, c.lines,
+        mmss(c.tr.start), midiName(c.tr.lo) + "–" + midiName(c.tr.hi)),
+    })),
+    { multi: true, preset, hint: t("svpPickHint") });
+  if(!picked || !picked.length) return;
+
+  const merged = svpMerge(picked.map(i => cooked[i].tr));
+  if(only){ useTiming("svp", merged.times, svpBpm(j)); return; }
+  state.sections = merged.sections;
+  ui.timing = { src: "svp", times: merged.times, bpm: svpBpm(j) };
+  normAll(); redraw();
+  const lines = merged.sections.reduce((a,x)=>a+x.lines.length,0);
+  toast(t("toastSvpImported", merged.sections.length, lines));
+}
+
 /* 按文件名或内容自动判断是工程还是词格 */
 function applyText(name, text){
-  if(/\.json$/i.test(name || "") || /^\s*\{/.test(text)) applyJson(text); else applyTxt(text);
+  if(/\.svp$/i.test(name || "") || /"tracks"\s*:/.test(text.slice(0, 400))) applySvp(text);
+  else if(/\.json$/i.test(name || "") || /^\s*\{/.test(text)) applyJson(text);
+  else applyTxt(text);
 }
 function readFile(f){
   if(/^image\//.test(f.type || "") || /\.(png|jpe?g|webp|gif|bmp|avif)$/i.test(f.name)){ loadBgImage(f); return; }
@@ -152,12 +227,12 @@ async function openText(kind){
     try{
       const r = await TAURI.core.invoke("open_text", kind === "json"
         ? {filterName:t("dlgFilterProject"), exts:["json"]}
-        : {filterName:t("dlgFilterLyricsPattern"), exts:["txt","md"]});
+        : {filterName:t("dlgFilterLyricsPattern"), exts:["txt","md","svp"]});
       if(r) applyText(r.name, r.contents);
     }catch(e){ toast(t("toastOpenFail", e)); }
     return;
   }
-  pick(kind === "json" ? ".json" : ".txt,.md");
+  pick(kind === "json" ? ".json" : ".txt,.md,.svp");
 }
 /* MIDI 是二进制，跟文本导入分开走一套：桌面版调新的 open_binary 命令，
    浏览器版用另一个隐藏的 <input type=file>（accept 已经锁定 .mid/.midi，
@@ -203,7 +278,7 @@ function setCell(v){ state.cell = Math.max(28,Math.min(72,v)); document.document
    背景是个人偏好，只存在这台电脑上：
    设置项跟着 state 走，图片本身单独存一个 localStorage 键。
    分开存是为了万一图片撑爆配额，歌词的自动保存不会跟着一起失败。 */
-function newProject(){ if(!confirm(t("confirmNew"))) return;
+async function newProject(){ if(!await ask(t("confirmNew"))) return;
   state.title = t("untitled"); state.sections = JSON.parse(JSON.stringify(SAMPLE)); normAll(); redraw(); }
 addEventListener("keydown",e=>{ if(e.key === "Escape"){ closeDialog(); aiClosePanel(); closeAllMenus(); } });
 function reflow(){
@@ -270,6 +345,7 @@ async function boot(){
   await loadLocales();
   load();
   if(!state.exp) state.exp = {alts:false, note:false};
+  if(!state.lrc) state.lrc = {offset:0, word:false};
   normAll();
   if(state.theme === "paper") state.theme = "light";   // 2.x 存下来的旧值
   if(!["system","light","dark"].includes(state.theme)) state.theme = "system";
@@ -291,9 +367,15 @@ async function boot(){
 
   createApp(App, {
     onNew: newProject, onOpenProj: ()=>openText("json"), onSaveProj: expProj,
-    onImpTxt: ()=>openText("txt"), onImpMidi: openMidi,
+    onImpTxt: ()=>{ timingOnly = false; openText("txt"); },
+    onImpMidi: ()=>{ timingOnly = false; openMidi(); },
+    onImpSvp: ()=>{ timingOnly = false; openText("svp"); },
     onExpPat: expPat, onExpMidiClean: expMidiClean, onExpMidiLyr: expMidiLyr,
     onReflow: reflow,
+    onReadTiming: kind => {
+      timingOnly = true;
+      kind === "midi" ? openMidi() : openText("svp");
+    },
   }).mount('#app');
   setCell(state.cell);
   initSliders();

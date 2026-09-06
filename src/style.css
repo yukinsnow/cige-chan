@@ -135,7 +135,7 @@ html,body{height:100%;overflow:hidden}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);-webkit-font-smoothing:antialiased}
 #app{height:100%;display:grid;grid-template-rows:auto 1fr auto;grid-template-columns:100%}
 /* 弹层和窗口按钮是 fixed，不该占 grid 行；显式指到第 2 行免得撑出多余轨道 */
-#app>#help,#app>#exp,#app>#settings,#app>#aip,#app>#drop,#app>.wctl{grid-area:2/1}
+#app>#help,#app>#exp,#app>#settings,#app>#lrc,#app>#aip,#app>#drop,#app>.wctl{grid-area:2/1}
 button,input{font-family:inherit;color:inherit}
 /* 按钮默认没有描边——一排描边框子是最重的网页味。层级靠填充深浅表达：
    静默（透明）→ 悬停（--hov）→ 按下（--act）→ 选中（--accent-soft）→ 主操作（实心）。 */
@@ -318,6 +318,10 @@ main{overflow:auto;overscroll-behavior:contain;background:var(--bg);
 .ck i{display:block;font-style:normal;font-size:11px;color:var(--dim);margin-top:2px}
 .prev{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:11px 13px;font-size:12px;line-height:1.85;color:var(--dim);white-space:pre-wrap;max-height:210px;overflow:auto;margin-top:12px;font-family:var(--font)}
 .prev b{color:var(--accent);font-weight:600}
+.lrcsrc{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px;padding:10px 12px;border-radius:11px;background:var(--sunk);border:1px solid var(--line);font-size:12.5px;color:var(--dim)}
+.lrcsrc.has{background:var(--accent-soft);border-color:transparent;color:var(--fg)}
+.lrcbtns{display:inline-flex;gap:7px}
+.lrcbtns button{font-size:12px;padding:5px 10px}
 .tools{flex:none;display:flex;gap:3px;opacity:0;transition:.15s}
 .row:hover .tools,.row:focus-within .tools{opacity:1}
 .tools button{padding:1px 7px;font-size:12px;min-width:26px}
@@ -367,14 +371,14 @@ footer b{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
 .aineed button:hover{background:var(--panel)}
 .ainote a{color:var(--accent)}
 
-#help,#exp,#settings{position:fixed;inset:0;background:var(--scrim);
+#help,#exp,#settings,#lrc{position:fixed;inset:0;background:var(--scrim);
   backdrop-filter:blur(16px) saturate(1.1);-webkit-backdrop-filter:blur(16px) saturate(1.1);
   z-index:50;display:none;align-items:center;justify-content:center;
   padding:calc(20px + var(--sat)) 20px calc(20px + var(--sab))}
-#help.show,#exp.show,#settings.show{display:flex}
+#help.show,#exp.show,#settings.show,#lrc.show{display:flex}
 /* 设置可以从 AI 面板里点开，层级要高于其它弹层 */
 #settings{z-index:55}
-#exp .card{max-width:520px}
+#exp .card,#lrc .card{max-width:520px}
 
 /* 背景设置面板 */
 .bgrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
@@ -695,3 +699,61 @@ input[type="range"]:focus-visible::-moz-range-thumb{box-shadow:0 0 0 4px var(--a
 .sel-list button.on{color:var(--accent);font-weight:600}
 /* 分类标签有长短两版：宽屏用全称，窄屏平铺时用短的 */
 .navshort{display:none}
+
+/* ---------- 自绘确认框 ---------- */
+#ask{position:fixed;inset:0;z-index:96;display:flex;align-items:center;justify-content:center;
+  padding:calc(20px + var(--sat)) 20px calc(20px + var(--sab));
+  background:var(--scrim);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.askcard{max-width:440px}
+.askbody{display:flex;gap:13px;padding:22px 24px 6px}
+.askicon{flex:none;color:var(--accent);margin-top:1px}
+.askbody p{margin:0;font-size:13.5px;line-height:1.85;color:var(--fg);white-space:pre-line}
+
+/* ---------- 选项弹窗（.svp 选轨等） ---------- */
+#pickdlg{position:fixed;inset:0;z-index:96;display:flex;align-items:center;justify-content:center;
+  padding:calc(20px + var(--sat)) 20px calc(20px + var(--sab));
+  background:var(--scrim);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+#pickdlg .setlist button{flex-direction:column;align-items:flex-start;gap:3px;padding:11px 14px}
+.pickname{font-size:13.5px;font-weight:600;color:var(--fg)}
+.pickdesc{font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+.pickrow{display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px}
+#pickdlg .setlist button.on .pickname{color:var(--accent)}
+
+/* ---------- 拆行弹窗 ---------- */
+#brkdlg{position:fixed;inset:0;z-index:97;display:flex;align-items:center;justify-content:center;
+  padding:calc(20px + var(--sat)) 20px calc(20px + var(--sab));
+  background:var(--scrim);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.brkcard{max-width:560px}
+.brkline{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.brkgrp{display:inline-flex;flex-direction:column;gap:2px;padding:8px 12px;border-radius:11px;
+  background:var(--sunk);border:1px solid var(--line)}
+.brkgrp b{font-size:14px;font-weight:600;color:var(--fg);line-height:1.5}
+.brkgrp b.blank{color:var(--dim);font-weight:400}
+.brkgrp i{font-size:11px;font-style:normal;color:var(--dim);font-variant-numeric:tabular-nums}
+.brkcut{flex:none;width:26px;height:26px;padding:0;border-radius:var(--r-full);
+  color:var(--dim);background:transparent;opacity:.5}
+.brkcut:hover{opacity:1;background:var(--hov)}
+.brkcut.on{opacity:1;color:var(--on-accent);background:var(--accent)}
+.brkprev{display:flex;flex-direction:column;gap:2px;margin-top:16px;padding-top:14px;
+  border-top:1px solid var(--line)}
+.brkrow{display:flex;align-items:baseline;gap:10px;font-size:13px;line-height:1.9}
+.brkno{flex:none;width:18px;text-align:right;color:var(--dim);font-size:11.5px;
+  font-variant-numeric:tabular-nums}
+.brkpat{flex:none;min-width:62px;color:var(--accent);font-size:11.5px;
+  font-variant-numeric:tabular-nums}
+.brktxt{color:var(--fg);overflow-wrap:anywhere}
+
+/* ---------- LRC 偏移输入 ---------- */
+.offbox{display:inline-flex;align-items:center;gap:1px;padding:4px 9px;border-radius:9px;
+  background:var(--panel2);border:1px solid var(--line);transition:border-color var(--dur-1) var(--ease),
+  box-shadow var(--dur-1) var(--ease);cursor:text}
+.offbox:hover{border-color:var(--cellbd)}
+.offbox:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.offbox input{-webkit-appearance:none;appearance:none;width:52px;padding:0;margin:0;border:none;
+  background:transparent;outline:none;text-align:right;font-family:inherit;font-size:13px;
+  font-weight:600;color:var(--accent);font-variant-numeric:tabular-nums}
+.offbox i{font-style:normal;font-size:11px;color:var(--dim);padding-left:2px}
+.offnudge{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:9px}
+.offnudge button{font-size:12px;padding:4px 10px;font-variant-numeric:tabular-nums}
+.offbpm{font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+.offzero{margin-left:auto;color:var(--dim)}

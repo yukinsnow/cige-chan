@@ -1,14 +1,17 @@
 <script setup>
 import { onMounted, watch } from 'vue';
-import { state, ui, newLine, norm, normAll } from '../core/state.js';
+import { state, ui, newLine, norm, normAll, breakLine } from '../core/state.js';
 import { cap, RT, CL, charToCell, cellToChar } from '../core/clusters.js';
 import { parseGroups } from '../core/txt.js';
 import { t } from '../i18n/index.js';
 import { save } from '../core/persist.js';
 import { $, el } from '../ui/dom.js';
 import { toast } from '../ui/toast.js';
+import { ask } from '../ui/confirm.js';
+import { askBreak } from '../ui/brk.js';
 import { iconEl } from '../ui/icon.js';
-import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Copy, X, Minus, Plus, Split } from 'lucide';
+import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Copy, X, Minus, Plus, Split,
+         SeparatorHorizontal } from 'lucide';
 
 let focusRef = null;      // {si,li,pos}
 let composing = false;
@@ -33,7 +36,7 @@ function render(){
     st.appendChild(btn(ArrowDown,t("secDown"),()=>moveSec(si,1)));
     st.appendChild(btn(Copy,t("secDup"),()=>{ state.sections.splice(si+1,0,JSON.parse(JSON.stringify(sec))); render(); }));
     st.appendChild(btn(t("secAdd"),t("secAddTitle"),()=>{ state.sections.splice(si+1,0,{name:t("newSectionName"),lines:[newLine()]}); render(); }));
-    st.appendChild(btn(X,t("secDel"),()=>{ if(confirm(t("confirmDeleteSec",sec.name))){ state.sections.splice(si,1); render(); } }));
+    st.appendChild(btn(X,t("secDel"),async ()=>{ if(await ask(t("confirmDeleteSec",sec.name))){ state.sections.splice(si,1); render(); } }));
     head.appendChild(st);
     S.appendChild(head);
 
@@ -91,6 +94,7 @@ function rowEl(sec,si,L,li){
   tools.appendChild(btn(Minus,t("rowMinusTitle"),()=>{ chg(L,-1,curPos); redrawRow(si,li,curPos); }));
   tools.appendChild(btn(Plus,t("rowPlusTitle"),()=>{ chg(L,1,curPos); redrawRow(si,li,curPos); }));
   tools.appendChild(btn(Split,t("rowSplitTitle"),()=>{ const m = splitAt(L,curPos); redrawRow(si,li,curPos); if(m) toast(m); }));
+  tools.appendChild(btn(SeparatorHorizontal,t("rowBreakTitle"),()=>openBreak(sec,si,L,li)));
   // 整句左右挪一格，跟 Alt+←/→ 同一个操作——手机上没有 Alt 键，只能靠这两个按钮
   tools.appendChild(btn(ArrowLeft,t("rowShiftLeftTitle"),()=>{
     const blocked = shiftLine(L,-1); if(blocked){ toast(blocked); return; }
@@ -396,6 +400,22 @@ function splitAt(L,pos){
   if(off === 0 && gi > 0){ L.g.splice(gi-1,2,L.g[gi-1]+n); return t("toastMergedPrev"); }
   if(off >= n && gi < L.g.length-1){ L.g.splice(gi,2,n+L.g[gi+1]); return t("toastMergedNext"); }
   return null;
+}
+
+/* 拆成多句：.svp 导进来常常一整段挤成一句，靠这个手动分行。
+   只在分句边界断，总格数不变，导入的时间戳不会因此失效。 */
+async function openBreak(sec,si,L,li){
+  if(L.g.length < 2){ toast(t("toastBreakNeedGroups")); return; }
+  const C = cap(L), cl = CL(RT(L.t));
+  const cells = Array.from({length:C}, (_,i) => cl[i] ?? "");
+  const cuts = await askBreak(L.g, cells);
+  if(!cuts || !cuts.length) return;
+  const parts = breakLine(L, cuts);
+  if(!parts) return;
+  sec.lines.splice(li, 1, ...parts.map(norm));
+  focusRef = {si, li, pos:0};
+  render(); save();
+  toast(t("toastBroken", parts.length));
 }
 
 /* 整句左移 / 右移一格。格子钉死之后没法再靠退格把写偏的一句整体挪回来，
