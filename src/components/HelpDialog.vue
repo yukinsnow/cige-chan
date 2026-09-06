@@ -29,6 +29,8 @@ const SECTIONS = [
   { id: 'grid', nav: 'helpNavGrid', icon: Grid3x3, blocks: [
     ['h4', 'helpGroupH4'], ['p', 'helpGroupP1'],
     ['h4', 'helpKanaH4'], ['p', 'helpKanaP1'], ['p', 'helpKanaP2'],
+    ['h4', 'helpAidH4'], ['p', 'helpAidP1'], ['p', 'helpAidP2'],
+    ['p', 'helpAidP3'], ['p', 'helpAidP4'],
   ] },
   { id: 'keys', nav: 'helpNavKeys', icon: Keyboard, blocks: [
     ['h4', 'helpKeysH4'],

@@ -7,7 +7,7 @@ const SAMPLE = [
 ];
 // 别对 state 子对象做身份比较（=== / Set / indexOf）proxy 会破坏
 const state = reactive({ title:"未命名歌曲", sections:JSON.parse(JSON.stringify(SAMPLE)), cell:44, theme:"system", lang:"zh", accent:"auto",
-               exp:{alts:false,note:false}, lrc:{offset:0, word:false}, bg:{mode:"none", color:"#1a1614", dim:.55, blur:0} });
+               exp:{alts:false,note:false}, lrc:{offset:0, word:false}, aid:false, bg:{mode:"none", color:"#1a1614", dim:.55, blur:0} });
 
 // 界面状态 不持久化
 let bg = "";

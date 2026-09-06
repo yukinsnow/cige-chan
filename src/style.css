@@ -757,3 +757,22 @@ input[type="range"]:focus-visible::-moz-range-thumb{box-shadow:0 0 0 4px var(--a
 .offnudge button{font-size:12px;padding:4px 10px;font-variant-numeric:tabular-nums}
 .offbpm{font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums}
 .offzero{margin-left:auto;color:var(--dim)}
+
+/* ---------- 平仄押韵辅助 ---------- */
+/* 平是空心圈、仄是实心点。异读换个颜色 别用警示色 多音字是常态不是错 */
+.pz{position:absolute;left:50%;bottom:calc(var(--cell)*.055);transform:translateX(-50%);
+  width:calc(var(--cell)*.11);height:calc(var(--cell)*.11);min-width:4px;min-height:4px;
+  border-radius:var(--r-full);pointer-events:none;font-style:normal}
+.pz.ping{border:1.5px solid var(--dim);opacity:.65}
+.pz.ze{background:var(--dim);opacity:.6}
+.pz.light{background:var(--dim);opacity:.22;transform:translateX(-50%) scale(.6)}
+.pz.ambig{border-color:var(--accent2);background-color:var(--accent2);opacity:.8}
+.pz.ambig.ping{background-color:transparent}
+.cell.caret .pz,.cell.sel .pz{opacity:.9}
+
+.rh{flex:none;width:34px;font-size:10.5px;line-height:1.4;text-align:center;color:var(--dim);
+  opacity:.75;letter-spacing:.02em}
+.rh:empty{width:0}
+.rh.s0{color:var(--accent);opacity:1;font-weight:600}
+.rh.s1{color:var(--accent2);opacity:1;font-weight:600}
+.rh.s2{opacity:.9}

@@ -3,6 +3,7 @@ import { onMounted, watch } from 'vue';
 import { state, ui, newLine, norm, normAll, breakLine } from '../core/state.js';
 import { cap, RT, CL, charToCell, cellToChar } from '../core/clusters.js';
 import { parseGroups } from '../core/txt.js';
+import { ready as aidReady, pz, pzAmbig, rhymeName, tailChar, rhymeSlots } from '../core/rhyme.js';
 import { t } from '../i18n/index.js';
 import { save } from '../core/persist.js';
 import { $, el } from '../ui/dom.js';
@@ -89,6 +90,7 @@ function rowEl(sec,si,L,li){
   R.appendChild(wrap);
 
   const cnt = el("div","cnt"); R.appendChild(cnt);
+  const rh = el("div","rh"); R.appendChild(rh);
 
   const tools = el("div","tools");
   tools.appendChild(btn(Minus,t("rowMinusTitle"),()=>{ chg(L,-1,curPos); redrawRow(si,li,curPos); }));
@@ -326,11 +328,53 @@ function paint(R,L){
       c.textContent = cl;
     }
   });
+  if(state.aid && aidReady()){
+    cells.forEach((c,i)=>{
+      if(!has(i)) return;
+      const k = pz(t[i][0]);
+      if(!k) return;
+      const m = el("i","pz " + k + (pzAmbig(t[i][0]) ? " ambig" : ""));
+      c.appendChild(m);
+    });
+  }
+
   const over = t.slice(C).join("");
   const ov = R.querySelector(".ovf");
   ov.textContent = over ? "＋"+over : ""; ov.style.display = over ? "" : "none";
   R.querySelector(".cnt").textContent = t.slice(0,C).filter(c=>c !== " " && c !== "　").length + "/" + C;
   R.querySelector(".pat").textContent = L.g.join("/");
+  queueAid();
+}
+
+/* paint 是在行还没插进 #doc 时调的（render 先建完整棵树再挂），
+   所以推到微任务里跑；顺带把一次 render 里的 N 次调用合成一次。 */
+let queued = false;
+function queueAid(){
+  if(queued) return;
+  queued = true;
+  Promise.resolve().then(()=>{ queued = false; paintAid(); });
+}
+
+/* 韵脚标在每行右边。槽位是按全篇统计的，改一个末字可能让整篇槽位重排，
+   所以一次刷所有行，不是只刷当前行。 */
+function paintAid(){
+  const badges = document.querySelectorAll("#doc .row .rh");
+  const blank = b => { b.className = "rh"; b.textContent = ""; b.removeAttribute("data-tip"); };
+  if(!(state.aid && aidReady())){ badges.forEach(blank); return; }
+
+  const { rows: info, slot } = rhymeSlots(state.sections);
+  // 段落起始的行号，省得每行再从头累加一遍
+  const base = [];
+  for(let i=0,a=0;i<state.sections.length;i++){ base.push(a); a += state.sections[i].lines.length; }
+
+  badges.forEach(b => {
+    const R = b.parentNode;
+    const x = info[base[+R.dataset.si] + +R.dataset.li];
+    if(!x || x.y < 0){ blank(b); return; }
+    b.className = "rh s" + Math.min(slot.get(x.y), 2);
+    b.textContent = rhymeName(x.y);
+    b.dataset.tip = t("rhTip", x.ch, rhymeName(x.y));
+  });
 }
 
 function caret(R,L,pos){

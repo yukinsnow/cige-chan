@@ -15,6 +15,7 @@ import { buildLrc, tickToSec } from './core/lrc.js';
 import { openCtx, closeCtx } from './ui/ctxmenu.js';
 import { maybeStartTour } from './ui/tour.js';
 import { initSliders } from './ui/slider.js';
+import { initAid } from './ui/aid.js';
 import { bindExternalLinks } from './platform/link.js';
 import { applyAccent, applyBg, loadBgImage } from './core/theme.js';
 import { pick } from './platform/open.js';
@@ -379,6 +380,7 @@ async function boot(){
   }).mount('#app');
   setCell(state.cell);
   initSliders();
+  initAid().then(on => { if(on) redraw(); });
   maybeStartTour();
 }
 boot().catch(e => {

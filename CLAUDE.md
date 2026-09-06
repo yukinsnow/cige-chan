@@ -75,13 +75,17 @@ src/core/           纯逻辑，不碰 DOM
   state.js          工程数据模型
   txt.js            词格 TXT 与歌词文本的解析和导出
   midi.js           MIDI 解析与序列化
+  svp.js            Synthesizer V 工程解析
+  lrc.js            LRC 时间轴与导出
+  rhyme.js          汉字查韵组与平仄
   theme.js          底色、主题色、背景图
   persist.js        localStorage 存取
 src/components/     Vue 组件，App.vue 是根
 src/i18n/index.js   给出 t()，文案本体在 public/i18n/
 src/ui/             DOM 小工具、toast、菜单、弹层开关
 src/platform/       平台差异，桌面走 Tauri 浏览器退回原生
-public/             原样拷进产物，favicon、宣传页、i18n 文案
+scripts/            开发期一次性脚本，产物提交进仓库
+public/             原样拷进产物，favicon、宣传页、i18n 文案、rhyme.json
 src-tauri/          Rust，只做 Web 做不到的事
 tests/              node 直接跑，没有测试框架
 ```
@@ -123,8 +127,14 @@ Web 版必须和客户端平权，往 Rust 挪逻辑前先想清楚：两边结�
 ```
 npm run dev:web    浏览器
 npm run dev        Tauri
-npm test           文本往返测试
+npm test           文本往返 + 押韵分组
+npm run gen:rhyme  重新生成 public/rhyme.json
 npm run build:web
 ```
 
-改过 core/txt.js 或 core/clusters.js 一定要跑 npm test。那 11 项钉的是「导出的歌词能被原样导入回来」，这里出过三个 bug。
+改过 core/txt.js 或 core/clusters.js 一定要跑 npm test。roundtrip 那 11 项钉的是「导出的歌词能被原样导入回来」，这里出过三个 bug。
+
+rhyme.json 是 scripts/gen-rhyme.mjs 用 pinyin-pro 生成的，产物提交进仓库，所以
+pinyin-pro 只是 devDependency，缺了也照样能构建。改过生成器要跑 npm test：韵母省写
+（iu/ui/un）、整体认读（zhi/ri）、j/q/x 后的 u 念 ü，这几处错了不报错，只会静悄悄
+给错押韵提示。表 55KB，只在打开平仄押韵辅助时 fetch，不进 bundle。

@@ -8,10 +8,11 @@
     "dev:web": "vite",
     "build:web": "vite build",
     "preview": "vite preview",
-    "test": "node tests/roundtrip.test.mjs",
+    "test": "node tests/roundtrip.test.mjs && node tests/rhyme.test.mjs",
     "tauri": "tauri",
     "dev": "tauri dev",
-    "build": "tauri build"
+    "build": "tauri build",
+    "gen:rhyme": "node scripts/gen-rhyme.mjs"
   },
   "dependencies": {
     "lucide": "^1.41.0",
@@ -20,6 +21,7 @@
   "devDependencies": {
     "@tauri-apps/cli": "^2",
     "@vitejs/plugin-vue": "^5.2.1",
+    "pinyin-pro": "^3.29.3",
     "vite": "^6.0.7"
   }
 }

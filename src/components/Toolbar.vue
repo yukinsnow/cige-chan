@@ -1,10 +1,12 @@
 <script setup>
+import { state } from '../core/state.js';
 import { t } from '../i18n/index.js';
 import { openDialog } from '../ui/dialogs.js';
 import { toggleMenu } from '../ui/menu.js';
 import { aiUi, aiOpenPanel, aiClosePanel } from '../ai.js';
 import Icon from './Icon.vue';
-import { ChevronDown, CircleHelp, Settings } from 'lucide';
+import { toggleAid } from '../ui/aid.js';
+import { ChevronDown, CircleHelp, Settings, SpellCheck } from 'lucide';
 
 defineProps({
   onNew: Function, onOpenProj: Function, onSaveProj: Function,
@@ -55,6 +57,8 @@ function toggleAi() {
     <button :class="{ 'ai-running': aiUi.busy }" @click="toggleAi"
             :data-tip="aiUi.busy ? t('aiBtnRunningTitle') : t('aiBtnTitle')">
       {{ aiUi.busy ? t('aiBtnRunning') : t('aiBtn') }}</button>
+    <button :class="{ on: state.aid }" :data-tip="t('aidTitle')" @click="toggleAid">
+      <Icon :node="SpellCheck" /></button>
     <button :data-tip="t('setTitle')" @click="openDialog('settings')"><Icon :node="Settings" /></button>
     <button :data-tip="t('helpTitleFull')" @click="openDialog('help')"><Icon :node="CircleHelp" /></button>
   </div>
