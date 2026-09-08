@@ -38,6 +38,7 @@
   --cellbd:#a28d67; --cellbg:#fffefa; --fill:#221b13; --ovf:#bd4b28;
   --panel-t:rgba(253,249,239,.72); --cell-t:rgba(255,254,250,.62); --line-t:rgba(0,0,0,.18);
   --scrim:rgba(221,205,168,.66); --sunk:rgba(42,35,27,.05);
+  --pz-ze:rgba(42,35,27,.075);
 }
 
 /* 夜间。跟随系统时只有 prefers-color-scheme 生效，显式选了浅色就不让它接管。
@@ -57,6 +58,7 @@
     --cellbd:#71614c; --cellbg:#1b1610; --fill:#f8f2e6; --ovf:#e8785c;
     --panel-t:rgba(34,27,19,.72); --cell-t:rgba(27,22,16,.5); --line-t:rgba(255,255,255,.16);
     --scrim:rgba(10,7,4,.62); --sunk:rgba(0,0,0,.24);
+  --pz-ze:rgba(255,248,235,.085);
   }
 }
 /* 显式选择。值跟上面那块一样，CSS 没法把一组变量复用到两个选择器上，只能写两遍 */
@@ -73,6 +75,7 @@ html[data-theme="dark"]{
   --cellbd:#71614c; --cellbg:#1b1610; --fill:#f8f2e6; --ovf:#e8785c;
   --panel-t:rgba(34,27,19,.72); --cell-t:rgba(27,22,16,.5); --line-t:rgba(255,255,255,.16);
   --scrim:rgba(10,7,4,.62); --sunk:rgba(0,0,0,.24);
+  --pz-ze:rgba(255,248,235,.085);
 }
 
 /* ---------- 主题色（换色调） ----------
@@ -759,18 +762,17 @@ input[type="range"]:focus-visible::-moz-range-thumb{box-shadow:0 0 0 4px var(--a
 .offzero{margin-left:auto;color:var(--dim)}
 
 /* ---------- 平仄押韵辅助 ---------- */
-/* 平是空心圈、仄是实心点。异读换个颜色 别用警示色 多音字是常态不是错 */
-.pz{position:absolute;left:50%;bottom:calc(var(--cell)*.055);transform:translateX(-50%);
-  width:calc(var(--cell)*.11);height:calc(var(--cell)*.11);min-width:4px;min-height:4px;
-  border-radius:var(--r-full);pointer-events:none;font-style:normal}
-.pz.ping{border:1.5px solid var(--dim);opacity:.65}
-.pz.ze{background:var(--dim);opacity:.6}
-.pz.light{background:var(--dim);opacity:.22;transform:translateX(-50%) scale(.6)}
-.pz.ambig{border-color:var(--accent2);background-color:var(--accent2);opacity:.8}
-.pz.ambig.ping{background-color:transparent}
-.cell.caret .pz,.cell.sel .pz{opacity:.9}
+/* 只给仄声的格子上底色，平声留白——每格都标的话一行二十格全是记号，太密。
+   走铺满格子的覆盖层而不是 background：背景图模式下 html.has-bg .cell 会把
+   background 整个盖掉，改那个属性会被吃。 */
+.pz{position:absolute;inset:0;border-radius:inherit;pointer-events:none;font-style:normal}
+.pz.ze{background:var(--pz-ze)}
+/* 异读跨平仄的角标。多音字是常态不是错 所以用副色不用警示色 */
+.pz.ambig::after{content:"";position:absolute;right:calc(var(--cell)*.07);
+  top:calc(var(--cell)*.07);width:calc(var(--cell)*.1);height:calc(var(--cell)*.1);
+  min-width:3px;min-height:3px;border-radius:var(--r-full);background:var(--accent2);opacity:.75}
 
-.rh{flex:none;width:34px;font-size:10.5px;line-height:1.4;text-align:center;color:var(--dim);
+.rh{flex:none;width:36px;font-size:11px;line-height:1.4;text-align:center;color:var(--dim);
   opacity:.75;letter-spacing:.02em}
 .rh:empty{width:0}
 .rh.s0{color:var(--accent);opacity:1;font-weight:600}

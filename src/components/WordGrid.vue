@@ -331,10 +331,10 @@ function paint(R,L){
   if(state.aid && aidReady()){
     cells.forEach((c,i)=>{
       if(!has(i)) return;
-      const k = pz(t[i][0]);
-      if(!k) return;
-      const m = el("i","pz " + k + (pzAmbig(t[i][0]) ? " ambig" : ""));
-      c.appendChild(m);
+      const ch = t[i][0];
+      // 平声和轻声不上底色 所以没东西要标时连元素都不建
+      const cls = (pz(ch) === "ze" ? " ze" : "") + (pzAmbig(ch) ? " ambig" : "");
+      if(cls) c.appendChild(el("i","pz" + cls));
     });
   }
 
