@@ -17,6 +17,7 @@ import Tour from './components/Tour.vue';
 import ConfirmDialog from './components/ConfirmDialog.vue';
 import PickDialog from './components/PickDialog.vue';
 import AiPanel from './components/AiPanel.vue';
+import IosNotice from './components/IosNotice.vue';
 
 import { isDesktopApp } from './platform/env.js';
 
@@ -38,6 +39,7 @@ defineProps({
              :on-exp-midi-lyr="onExpMidiLyr" :on-reflow="onReflow" :on-cell="onCell" />
   </header>
 
+  <IosNotice />
   <WordGrid />
 
   <footer>

@@ -12,7 +12,8 @@
     "tauri": "tauri",
     "dev": "tauri dev",
     "build": "tauri build",
-    "gen:rhyme": "node scripts/gen-rhyme.mjs"
+    "gen:rhyme": "node scripts/gen-rhyme.mjs",
+    "ios:icons": "node scripts/ios-icons.mjs"
   },
   "dependencies": {
     "lucide": "^1.41.0",

@@ -94,6 +94,7 @@
   "helpAltP2": "「歌詞を書き出す」を押すと、全ての別案（同じ行なら <code>/</code> で区切る）と備考（行末の <code>（）</code> 内に記載）を TXT に含めるかどうかをチェックボックスで選べます。チェック状態は記憶されます。「プロジェクトを保存」で書き出す json には常に全ての別案と備考が含まれます。",
   "helpAltP3": "逆に「格子 TXT をインポート」する際、行末に <code>（……）</code> が付いている場合は自動的に切り離してその行の備考として扱われ、括弧自体も中の文字もマスを占有しません——書き出し時の形式とちょうど対応しています。行末にぴったり付いている括弧のみが対象で、行頭や行の途中にある括弧はこれまでどおり通常の句読点として扱われます。",
   "helpClose": "閉じる",
+  "iosNote": "Safari は <b>7 日間開かれていない</b>サイトのデータを消去します。原稿もそこに保存されています。共有ボタンから「<b>ホーム画面に追加</b>」して、そこから開けばこの制限は受けません。または書き終えたら「プロジェクトを保存」で書き出しておいてください。",
   "aiTransNote": "日本語の文面は AI による翻訳で、母語話者のチェックは通っていません。おかしな言い回しや誤りを見つけたら、<a href=\"https://github.com/yukinsnow/cige-chan/issues\" target=\"_blank\" rel=\"noopener\">GitHub の Issue</a> か <a href=\"https://space.bilibili.com/123372\" target=\"_blank\" rel=\"noopener\">bilibili</a> で教えていただけると助かります。",
   "creditLine": "<b>Team RE-SPONSE</b> · We create creative content, music videos, and digital dreams.",
   "expTitle": "歌詞を書き出す",

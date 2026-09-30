@@ -19,6 +19,15 @@ let composing = false;
 
 const esc = s => String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
+/* iOS 不认 autocomplete=off 对自动纠正的作用，得单独关：
+   智能标点会把 ... 换成 …，三格变一格，同一句在 iOS 和桌面上格数不同 */
+function plainInput(cls){
+  const i = el("input",cls);
+  i.type = "text"; i.autocomplete = "off"; i.spellcheck = false;
+  i.setAttribute("autocorrect","off"); i.setAttribute("autocapitalize","off");
+  return i;
+}
+
 /* ================= render ================= */
 function render(){
   const doc = $("#doc"); doc.innerHTML = "";
@@ -26,7 +35,7 @@ function render(){
     const S = el("div","sec"); S.dataset.si = si;
 
     const head = el("div","sechead");
-    const nm = el("input","secname"); nm.value = sec.name; nm.spellcheck = false;
+    const nm = plainInput("secname"); nm.value = sec.name;
     nm.oninput = ()=>{ sec.name = nm.value; save(); };
     head.appendChild(nm);
     const meta = el("span","secmeta");
@@ -84,7 +93,7 @@ function rowEl(sec,si,L,li){
   wrap.appendChild(grid);
 
   let curPos = 0;   // 本句光标所在格序号（失焦后仍保留，供工具按钮使用）
-  const io = el("input","io"); io.type = "text"; io.autocomplete = "off"; io.spellcheck = false; io.value = L.t;
+  const io = plainInput("io"); io.value = L.t;
   const comp = el("span","comp");
   wrap.appendChild(io); wrap.appendChild(comp);
   R.appendChild(wrap);
@@ -156,7 +165,7 @@ function rowEl(sec,si,L,li){
   buildVers();
   R._vers = buildVers;
 
-  const nt = el("input","note"); nt.type = "text"; nt.spellcheck = false;
+  const nt = plainInput("note");
   nt.value = L.note; nt.placeholder = t("notePlaceholder");
   nt.oninput = ()=>{ L.note = nt.value; R.classList.toggle("hasx", !!(L.alts.length || L.note)); save(); };
   // 备注框放在版本条后面，这样重建版本条不会打断正在输入的备注
@@ -508,7 +517,7 @@ function moveSec(si,d){
 }
 
 function editPattern(pat,L){
-  const inp = el("input","pat-edit"); inp.value = L.g.join(" ");
+  const inp = plainInput("pat-edit"); inp.value = L.g.join(" ");
   inp.placeholder = t("patEditPlaceholder");
   pat.replaceWith(inp); inp.focus(); inp.select();
   let done = false;

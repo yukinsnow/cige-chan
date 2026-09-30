@@ -94,6 +94,7 @@
   "helpAltP2": "「가사 내보내기」를 누르면 모든 대안(같은 줄이면 <code>/</code>로 구분)과 메모(줄 끝의 <code>（）</code> 안에 기재)를 TXT에 함께 넣을지 체크박스로 고를 수 있고, 체크 상태는 기억됩니다. 「프로젝트 저장」으로 내보내는 json에는 항상 모든 대안과 메모가 포함됩니다.",
   "helpAltP3": "반대로 「격자 TXT 가져오기」를 할 때 줄 끝에 <code>（……）</code>가 붙어 있으면 자동으로 분리되어 그 줄의 메모로 처리되며, 괄호 자체와 안의 글자 모두 칸을 차지하지 않습니다 — 내보내기 형식과 정확히 대응됩니다. 줄 끝에 바로 붙은 괄호만 인식하며, 줄 앞이나 중간의 괄호는 여전히 일반 문장부호로 처리됩니다.",
   "helpClose": "닫기",
+  "iosNote": "Safari 는 <b>7일 동안 열지 않은</b> 사이트의 데이터를 지웁니다. 원고도 거기에 저장되어 있습니다. 공유 버튼에서 '<b>홈 화면에 추가</b>'한 뒤 거기서 열면 이 제한을 받지 않습니다. 아니면 다 쓴 뒤 '프로젝트 저장'으로 내보내 두세요.",
   "aiTransNote": "한국어 문면은 AI가 번역한 것이며 원어민의 검수를 거치지 않았습니다. 어색한 표현이나 잘못된 부분을 발견하시면 <a href=\"https://github.com/yukinsnow/cige-chan/issues\" target=\"_blank\" rel=\"noopener\">GitHub Issue</a> 또는 <a href=\"https://space.bilibili.com/123372\" target=\"_blank\" rel=\"noopener\">bilibili</a>로 알려 주시면 감사하겠습니다.",
   "creditLine": "<b>Team RE-SPONSE</b> · We create creative content, music videos, and digital dreams.",
   "expTitle": "가사 내보내기",

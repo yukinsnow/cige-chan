@@ -48,6 +48,10 @@
       "deb": {
         "depends": []
       }
+    },
+    "iOS": {
+      "infoPlist": "Info.ios.plist",
+      "minimumSystemVersion": "14.0"
     }
   }
 }

@@ -286,7 +286,7 @@ main{overflow:auto;overscroll-behavior:contain;background:var(--bg);
 
 .io{position:absolute;inset:0;width:100%;height:100%;background:transparent;border:none;outline:none;color:transparent;caret-color:transparent;
   font-size:calc(var(--cell)*.62);letter-spacing:calc(var(--cell) + var(--gap) - var(--cell)*.62);padding-left:calc(var(--cell)*.19);z-index:2;
-  touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;}
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
 /* 透明输入框是单行的，浏览器原生选区高亮会沿这条单行画出来、和折行后的格子对不上，
    表现为一条飘忽的斜带子。这里把原生高亮设为透明，改由 paintSel() 把选区画到对应的
    格子上（.cell.sel），高亮就永远跟着格子走。 */
@@ -435,7 +435,7 @@ pre{background:var(--sunk);border:none;border-radius:var(--r-md);padding:12px 14
   -webkit-backdrop-filter:blur(10px);z-index:60;display:none;align-items:center;
   justify-content:center;font-size:17px;font-weight:600;color:var(--accent);pointer-events:none}
 #drop.show{display:flex;animation:cardIn var(--dur-2) var(--ease)}
-#toast{position:fixed;bottom:calc(56px + var(--sab));left:50%;transform:translateX(-50%);background:var(--accent);color:var(--on-accent);padding:7px 16px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;transition:.2s;pointer-events:none;z-index:70}
+#toast{position:fixed;bottom:calc(56px + var(--sab) + var(--kb, 0px));left:50%;transform:translateX(-50%);background:var(--accent);color:var(--on-accent);padding:7px 16px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;transition:.2s;pointer-events:none;z-index:70}
 #toast.show{opacity:1}
 
 /* ---------- AI 填词面板 ---------- */
@@ -515,7 +515,8 @@ html.unfocused .wctl.mac button{background:#4a4a4a}
 
 /* ---------- 自绘滚动条 ----------
    两套写法各管一边：scrollbar-color 是标准属性（Firefox 和新版 Chromium），
-   ::-webkit-scrollbar 覆盖 WebView2 / WKWebView / 安卓 WebView。 */
+   ::-webkit-scrollbar 覆盖 WebView2 / macOS WKWebView / 安卓 WebView。
+   iOS 是系统浮层滚动条 这两套都不认 那边只能是原生的 */
 *{scrollbar-width:thin;scrollbar-color:var(--cellbd) transparent}
 ::-webkit-scrollbar{width:11px;height:11px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -778,3 +779,19 @@ input[type="range"]:focus-visible::-moz-range-thumb{box-shadow:0 0 0 4px var(--a
 .rh.s0{color:var(--accent);opacity:1;font-weight:600}
 .rh.s1{color:var(--accent2);opacity:1;font-weight:600}
 .rh.s2{opacity:.9}
+
+.iosnote{display:flex;align-items:flex-start;gap:9px;margin:10px calc(14px + var(--sar)) 0 calc(14px + var(--sal));
+  padding:10px 8px 10px 13px;border-radius:12px;background:var(--accent-soft);color:var(--fg);font-size:12.5px;line-height:1.7}
+.iosnote p{margin:0;flex:1}
+.iosicon{flex:none;margin-top:3px;color:var(--accent)}
+
+/* ---------- iOS ----------
+   输入框字号小于 16px 时 iOS 聚焦会把整页放大 而且不会自己缩回去，
+   user-scalable=no 从 iOS 10 起被系统无视。只有 iOS WebKit 认 touch-callout，
+   拿它圈定范围 桌面和安卓不受影响。.io 是 --cell*.62 最小 17.4px 本来就安全 */
+@supports (-webkit-touch-callout:none){
+  .secname,.note,.pat-edit,.offbox input,.airow input,.airow textarea{font-size:16px}
+  /* 长按弹原生「拷贝 / 查询」的气泡是 iOS 用户预期的选字入口 别关；
+     只有纯装饰的地方才关，免得长按按钮也弹一个 */
+  button,.cell,.ln,.pat,.cnt,.rh,.sechead img{-webkit-touch-callout:none}
+}

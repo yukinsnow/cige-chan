@@ -6,7 +6,7 @@ import { toast } from './ui/toast.js';
 import { closeDialog } from './ui/dialogs.js';
 import { closeAllMenus } from './ui/menu.js';
 import { TAURI, download, downloadBinary } from './platform/save.js';
-import { isDesktopApp, isMac } from './platform/env.js';
+import { isDesktopApp, isMac, isMobile, isIOS } from './platform/env.js';
 import { initTips } from './ui/tip.js';
 import { ask } from './ui/confirm.js';
 import { askPick } from './ui/pick.js';
@@ -317,10 +317,20 @@ if(matchMedia("(pointer:fine)").matches){
 // 挂载必须在 await 之后 否则首帧没有文案
 // 桌面端用自绘右键菜单代替 webview 那个：原生菜单的外观由系统定，
 // 在无边框窗口里格外突兀。浏览器版不动它，那里用户预期就是原生菜单。
-if(TAURI){
+// 手机上不接管：iOS 根本不发 contextmenu，安卓长按发的话拦了会吃掉原生选字手柄和放大镜
+if(TAURI && !isMobile){
   addEventListener("contextmenu", e => { e.preventDefault(); openCtx(e); });
   addEventListener("keydown", e => { if(e.key === "Escape") closeCtx(); });
   addEventListener("blur", closeCtx);
+}
+
+// iOS 键盘弹起不缩 layout viewport 底部定位的东西会被盖住 自己算出被挡的高度
+if(isIOS && window.visualViewport){
+  const vv = window.visualViewport;
+  const kb = () => document.documentElement.style.setProperty("--kb",
+    Math.max(0, innerHeight - vv.height - vv.offsetTop) + "px");
+  vv.addEventListener("resize", kb);
+  vv.addEventListener("scroll", kb);
 }
 
 // 桌面客户端才有窗口按钮 顶栏要给它预留内边距

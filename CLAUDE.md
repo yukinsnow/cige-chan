@@ -129,6 +129,7 @@ npm run dev:web    浏览器
 npm run dev        Tauri
 npm test           文本往返 + 押韵分组
 npm run gen:rhyme  重新生成 public/rhyme.json
+npm run ios:icons  去掉 icons/ios/ 里每张图的 alpha（npx tauri icon 之后跑）
 npm run build:web
 ```
 
@@ -138,3 +139,8 @@ rhyme.json 是 scripts/gen-rhyme.mjs 用 pinyin-pro 生成的，产物提交进�
 pinyin-pro 只是 devDependency，缺了也照样能构建。改过生成器要跑 npm test：韵母省写
 （iu/ui/un）、整体认读（zhi/ri）、j/q/x 后的 u 念 ü，这几处错了不报错，只会静悄悄
 给错押韵提示。表 55KB，只在打开平仄押韵辅助时 fetch，不进 bundle。
+
+iOS 的 AppIcon 不许带 alpha，App Store 校验会以 ITMS-90717 退回来。tauri icon
+从带透明背景的源图生成，产出的 18 张全是带 alpha 的，每次重新生成图标都要补跑
+npm run ios:icons。主屏幕显示名在 src-tauri/Info.ios.plist，不跟 productName 走
+（productName 是构建产物的名字，不能带非 ASCII）。
