@@ -51,7 +51,8 @@
     },
     "iOS": {
       "infoPlist": "Info.ios.plist",
-      "minimumSystemVersion": "14.0"
+      "minimumSystemVersion": "15.0",
+      "developmentTeam": "DK67MK8ZTB"
     }
   }
 }
