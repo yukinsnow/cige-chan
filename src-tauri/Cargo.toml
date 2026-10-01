@@ -21,6 +21,11 @@ tauri-plugin-fs = "2"
 serde = { version = "1", features = ["derive"] }
 tauri-plugin-opener = "2.5.5"
 
+# tauri 的 iOS 构建经 swift-rs 调 swift build，Xcode 27 下默认后端会让它拿 macOS SDK 编 iOS。
+# 上游 1.0.8 没修，vendor 里只多了一行 --build-system native。上游修了就删掉这段和 vendor/
+[patch.crates-io]
+swift-rs = { path = "vendor/swift-rs" }
+
 [profile.release]
 opt-level = "s"
 lto = true

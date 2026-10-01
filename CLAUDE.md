@@ -87,6 +87,7 @@ src/platform/       平台差异，桌面走 Tauri 浏览器退回原生
 scripts/            开发期一次性脚本，产物提交进仓库
 public/             原样拷进产物，favicon、宣传页、i18n 文案、rhyme.json
 src-tauri/          Rust，只做 Web 做不到的事
+  vendor/swift-rs/  打了一行补丁的上游 crate，原因见 Cargo.toml 的 [patch.crates-io]
 tests/              node 直接跑，没有测试框架
 ```
 
