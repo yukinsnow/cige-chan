@@ -88,6 +88,7 @@ scripts/            开发期一次性脚本，产物提交进仓库
 public/             原样拷进产物，favicon、宣传页、i18n 文案、rhyme.json
 src-tauri/          Rust，只做 Web 做不到的事
   vendor/swift-rs/  打了一行补丁的上游 crate，原因见 Cargo.toml 的 [patch.crates-io]
+  vendor/tao/       同上
 tests/              node 直接跑，没有测试框架
 ```
 
@@ -143,5 +144,7 @@ pinyin-pro 只是 devDependency，缺了也照样能构建。改过生成器要�
 
 iOS 的 AppIcon 不许带 alpha，App Store 校验会以 ITMS-90717 退回来。tauri icon
 从带透明背景的源图生成，产出的 18 张全是带 alpha 的，每次重新生成图标都要补跑
-npm run ios:icons。主屏幕显示名在 src-tauri/Info.ios.plist，不跟 productName 走
+npm run ios:icons。Xcode 实际打包用的是 gen/apple 里的 AppIcon.appiconset，
+只在 tauri ios init 时拷一次，脚本会顺手同步过去，否则包里一直是 tauri 默认图标。
+主屏幕显示名在 src-tauri/Info.ios.plist，不跟 productName 走
 （productName 是构建产物的名字，不能带非 ASCII）。

@@ -118,3 +118,14 @@ for (const f of fs.readdirSync(DIR).filter(x => x.endsWith('.png')).sort()) {
 }
 console.log(`\n处理 ${done} 张，全部改为无 alpha 的 RGB`);
 if (warned) console.log(`其中 ${warned} 张有全透明像素：iOS 上会显示成白块，去改源图的背景`);
+
+// tauri 只在 ios init 时拷一次图标进 gen/ 之后换图不会跟着走 不同步就一直是默认图标
+const SET = new URL('../src-tauri/gen/apple/Assets.xcassets/AppIcon.appiconset/', import.meta.url);
+if (fs.existsSync(SET)) {
+  let n = 0;
+  for (const f of fs.readdirSync(DIR).filter(x => x.endsWith('.png'))) {
+    fs.copyFileSync(new URL(f, DIR), new URL(f, SET));
+    n++;
+  }
+  console.log(`已同步 ${n} 张到 gen/apple 的 AppIcon.appiconset`);
+}
