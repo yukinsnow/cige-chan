@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
-  iOS 主屏幕上显示的名字。bundle.productName 是 CigeChan（构建产物的名字，
-  不能带非 ASCII），桌面端另有自己的标题，所以这里单独给 iOS 一个中文名。
+  CFBundleDisplayName：主屏幕上的名字。productName 是构建产物名，不能带非 ASCII。
 
-  另外两个键是如实声明：词格酱不采集任何数据，也不追踪。
-  缺了它们 App Store Connect 那边会一直显示「缺少隐私信息」。
+  ITSAppUsesNonExemptEncryption：没用自有加密，声明了每次上传就不用回答出口合规问题。
+
+  UIApplicationSceneManifest：iOS 27 SDK 起不采用 UIScene 生命周期的 app 启动即被系统杀掉。
+  tao 0.35 只有 UIApplicationSupportsMultipleScenes 为 true 才走 scene 那条路，
+  所以这里必须是 true，哪怕词格酱只有一个窗口。另需 vendor/tao 里的补丁，否则照样崩。
 -->
 <plist version="1.0">
 <dict>
@@ -13,5 +15,10 @@
   <string>词格酱</string>
   <key>ITSAppUsesNonExemptEncryption</key>
   <false/>
+  <key>UIApplicationSceneManifest</key>
+  <dict>
+    <key>UIApplicationSupportsMultipleScenes</key>
+    <true/>
+  </dict>
 </dict>
 </plist>
