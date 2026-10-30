@@ -7,15 +7,22 @@ on:
   workflow_dispatch:
     inputs:
       ios_only:
-        description: Only rebuild the iOS simulator app
+        description: Only rebuild the selected iOS target
         type: boolean
         default: false
+      ios_target:
+        description: iOS build target
+        type: choice
+        default: simulator
+        options:
+          - simulator
+          - device
 
 permissions:
   contents: read
 
 concurrency:
-  group: build-${{ github.ref }}-${{ inputs.ios_only || false }}
+  group: build-${{ github.ref }}-${{ inputs.ios_only || false }}-${{ inputs.ios_target || 'simulator' }}
   cancel-in-progress: true
 
 env:
@@ -35,7 +42,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: node scripts/verify-mobile.cjs
 
-  ios-simulator:
+  ios:
+    name: iOS (${{ inputs.ios_target || 'simulator' }})
     if: ${{ !startsWith(github.ref, 'refs/tags/') }}
     runs-on: macos-latest
     timeout-minutes: 40
@@ -46,26 +54,41 @@ jobs:
           node-version: 22
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-ios-sim
+          targets: ${{ inputs.ios_target == 'device' && 'aarch64-apple-ios' || 'aarch64-apple-ios-sim' }}
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
       - run: brew install xcodegen
-      - run: npm install
+      - run: npm install --no-save @tauri-apps/cli@2.12.4
       - name: Initialize iOS project
         run: npx tauri ios init --ci --skip-targets-install
-      - name: Build unsigned iOS simulator app
-        run: npx tauri ios build --ci --target aarch64-sim
-      - name: Collect simulator app
-        shell: bash
+      - name: Build iOS app
+        env:
+          IOS_TARGET: ${{ inputs.ios_target || 'simulator' }}
+        run: |
+          if [[ "$IOS_TARGET" == "device" ]]; then
+            npx tauri ios build --ci --target aarch64 --no-sign
+          else
+            npx tauri ios build --ci --target aarch64-sim
+          fi
+      - name: Collect and verify iOS artifact
+        env:
+          IOS_TARGET: ${{ inputs.ios_target || 'simulator' }}
         run: |
           mkdir -p dist
-          app=$(find "$HOME/Library/Developer/Xcode/DerivedData" src-tauri/gen/apple -type d -name 'CigeChan.app' -path '*iphonesimulator*' -print -quit)
-          test -n "$app"
-          ditto -c -k --sequesterRsrc --keepParent "$app" dist/cige-chan-ios-simulator.zip
+          if [[ "$IOS_TARGET" == "device" ]]; then
+            ipa=$(find src-tauri/gen/apple/build -type f -name '*.ipa' -print -quit)
+            test -n "$ipa"
+            cp "$ipa" dist/cige-chan-ios-device-unsigned.ipa
+            python3 scripts/verify-ios-ipa.py dist/cige-chan-ios-device-unsigned.ipa dist/ios-device-build.json
+          else
+            app=$(find "$HOME/Library/Developer/Xcode/DerivedData" src-tauri/gen/apple -type d -name 'CigeChan.app' -path '*iphonesimulator*' -print -quit)
+            test -n "$app"
+            ditto -c -k --sequesterRsrc --keepParent "$app" dist/cige-chan-ios-simulator.zip
+          fi
       - uses: actions/upload-artifact@v4
         with:
-          name: ios-simulator
+          name: ios-${{ inputs.ios_target || 'simulator' }}
           path: dist/*
           if-no-files-found: error
 
