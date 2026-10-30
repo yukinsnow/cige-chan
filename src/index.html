@@ -84,18 +84,27 @@ header{position:sticky;top:0;z-index:30;background:var(--panel);border-bottom:1p
 #title{background:transparent;border:none;font-size:17px;font-weight:700;letter-spacing:.5px;padding:4px 6px;border-radius:6px;min-width:150px;width:210px}
 #title:focus{outline:none;background:var(--panel2)}
 .sep{width:1px;height:22px;background:var(--line);margin:0 3px}
-.file-actions{display:contents}
+.file-actions,.tool-actions{display:contents}
 /* 窄屏触控设备将文件操作固定为一排，其余操作紧凑排列。 */
 @media (max-width:600px) and (pointer:coarse){
   .bar{gap:6px}
   .bar > .sep,.file-actions > .sep,.bar > .grow{display:none}
-  .file-actions{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));flex:0 0 100%;gap:4px}
+  .file-actions{display:grid;grid-template-columns:minmax(0,1fr) 44px repeat(4,minmax(0,1fr));flex:0 0 100%;gap:4px}
   .file-actions > button,.file-actions > .menuwrap{flex:1;min-width:0}
   .file-actions > .menuwrap > button{width:100%;justify-content:center}
   .bar > button,.bar > .menuwrap{order:1}
   .bar > button,.bar > .menuwrap > button,.file-actions > button,.file-actions > .menuwrap > button{min-height:44px;padding:5px 6px}
   .file-actions > button,.file-actions > .menuwrap > button{padding:5px 2px;white-space:nowrap}
   .file-actions > .menuwrap > button{gap:2px}
+  .tool-actions{display:flex;flex:0 0 100%;flex-wrap:wrap;gap:4px}
+  .tool-actions > button,.tool-actions > .menuwrap{flex:1 0 auto}
+  .tool-actions > button,.tool-actions > .menuwrap > button{min-height:44px;padding:5px 4px;white-space:nowrap}
+  .tool-actions > .menuwrap > button{width:100%;justify-content:center;gap:2px}
+  .tool-actions > #helpb{min-width:44px}
+}
+@media (min-width:375px) and (max-width:600px) and (pointer:coarse){
+  .tool-actions{display:grid;grid-template-columns:1.5fr 1.3fr .75fr .75fr 1fr 1.25fr minmax(44px,.9fr)}
+  .tool-actions > button,.tool-actions > .menuwrap{min-width:0}
 }
 .grow{flex:1}
 .tag{font-size:11px;color:var(--dim);letter-spacing:1px;border:1px solid var(--line);padding:2px 7px;border-radius:20px}
@@ -348,6 +357,7 @@ pre{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padd
     </div>
     </div>
     <div class="grow"></div>
+    <div class="tool-actions">
     <button id="reflow" data-i18n="btnReflow" data-i18n-title="btnReflowTitle" title="把每句超出的字顺移到下一句">整理溢出</button>
     <button id="aibtn" data-i18n="aiBtn" data-i18n-title="aiBtnTitle" title="接入 OpenAI 兼容接口（中转站），按词格自动填词">AI 填词</button>
     <button id="small" data-i18n="btnSmall">A−</button><button id="big" data-i18n="btnBig">A+</button>
@@ -362,6 +372,7 @@ pre{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padd
       </div>
     </div>
     <button id="helpb">?</button>
+    </div>
   </div>
 </header>
 
