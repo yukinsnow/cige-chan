@@ -26,7 +26,7 @@ zh: {
   autosavedOn: "自动保存已开启",
   autosavedAt: time => `已自动保存 ${time}`,
   autosaveUnavailable: "本地保存不可用",
-  githubTitle: "GitHub @yukinsnow", bilibiliTitle: "哔哩哔哩 @純白", bilibiliLabel: "哔哩哔哩",
+  githubTitle: "GitHub @yukinsnow", teamTitle: "词格酱制作组 · GitHub", teamLabel: "词格酱制作组",
 
   helpIntro: "按作曲给出的词格摆好空格子，你只管往里填字。",
   helpImportFormatH4: "导入格式",
@@ -245,7 +245,7 @@ zhHant: {
   autosavedOn: "自動儲存已開啟",
   autosavedAt: time => `已自動儲存 ${time}`,
   autosaveUnavailable: "本地儲存不可用",
-  githubTitle: "GitHub @yukinsnow", bilibiliTitle: "嗶哩嗶哩 @純白", bilibiliLabel: "嗶哩嗶哩",
+  githubTitle: "GitHub @yukinsnow", teamTitle: "詞格醬製作組 · GitHub", teamLabel: "詞格醬製作組",
 
   helpIntro: "按作曲給出的詞格擺好空格子，你只管往裡填字。",
   helpImportFormatH4: "匯入格式",
@@ -464,7 +464,7 @@ ja: {
   autosavedOn: "自動保存 オン",
   autosavedAt: time => `自動保存済み ${time}`,
   autosaveUnavailable: "ローカル保存を利用できません",
-  githubTitle: "GitHub @yukinsnow", bilibiliTitle: "Bilibili @純白", bilibiliLabel: "Bilibili",
+  githubTitle: "GitHub @yukinsnow", teamTitle: "词格酱制作组 · GitHub", teamLabel: "词格酱制作组",
 
   helpIntro: "作曲側から渡された格子どおりに空のマスを並べます。あとは文字を埋めていくだけです。",
   helpImportFormatH4: "インポート形式",
@@ -683,7 +683,7 @@ ko: {
   autosavedOn: "자동 저장 켜짐",
   autosavedAt: time => `자동 저장됨 ${time}`,
   autosaveUnavailable: "로컬 저장을 사용할 수 없습니다",
-  githubTitle: "GitHub @yukinsnow", bilibiliTitle: "Bilibili @純白", bilibiliLabel: "Bilibili",
+  githubTitle: "GitHub @yukinsnow", teamTitle: "词格酱制作组 · GitHub", teamLabel: "词格酱制作组",
 
   helpIntro: "작곡가가 준 격자대로 빈 칸을 배열해 두었으니, 그 안에 글자만 채우면 됩니다.",
   helpImportFormatH4: "가져오기 형식",
