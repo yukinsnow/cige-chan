@@ -64,6 +64,11 @@ jobs:
         run: npx tauri ios init --ci --skip-targets-install
       - name: Stage CigeChan app icons
         run: node scripts/stage-ios-icons.cjs
+      - name: Stage localized app names
+        run: |
+          node scripts/stage-ios-localizations.cjs
+          cd src-tauri/gen/apple
+          xcodegen generate
       - name: Build iOS app
         env:
           IOS_TARGET: ${{ inputs.ios_target || 'simulator' }}

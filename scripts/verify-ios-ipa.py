@@ -21,6 +21,18 @@ def verify(ipa_path):
         if len(infos) != 1:
             raise ValueError("IPA must contain exactly one main app under Payload/")
         info = plistlib.loads(archive.read(infos[0]))
+        names = {}
+        for locale, expected in {"zh": "词格酱", "zh-Hans": "词格酱", "zh-Hant": "詞格醬", "en": "CigeChan"}.items():
+            resource = infos[0].removesuffix("Info.plist") + locale + ".lproj/InfoPlist.strings"
+            raw = archive.read(resource)
+            if raw.startswith(b"bplist") or raw.lstrip().startswith(b"<?xml"):
+                strings = plistlib.loads(raw)
+            else:
+                text = raw.decode("utf-16" if raw.startswith((b"\xff\xfe", b"\xfe\xff")) else "utf-8-sig")
+                strings = dict(re.findall(r'"(CFBundle(?:DisplayName|Name))"\s*=\s*"([^"]+)"\s*;', text))
+            if any(strings.get(key) != expected for key in ("CFBundleDisplayName", "CFBundleName")):
+                raise ValueError("Incorrect localized app name: " + locale)
+            names[locale] = expected
         if info.get("CFBundleSupportedPlatforms") != ["iPhoneOS"]:
             raise ValueError("App does not target physical iOS devices")
         if info.get("CFBundleIdentifier") != config["identifier"]:
@@ -52,6 +64,7 @@ def verify(ipa_path):
         "architecture": archs,
         "platform": "iPhoneOS",
         "verifiedIcons": icons,
+        "localizedNames": names,
         "signing": "unsigned; must be signed before installation",
     }
 
