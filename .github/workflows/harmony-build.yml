@@ -27,10 +27,10 @@ jobs:
           java-version: '17'
       - name: Cache official command line tools
         id: sdk-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: ${{ runner.temp }}/harmony/command-line-tools
-          key: harmony-clt-linux-5.1.0.840-no-native-v1
+          key: harmony-clt-linux-5.1.0.840-full-v2
       - name: Download and verify official SDK
         if: steps.sdk-cache.outputs.cache-hit != 'true'
         shell: bash
@@ -41,7 +41,7 @@ jobs:
           checksum=$(curl --fail --location --retry 3 "$base/$archive.sha256" | awk '{print $1}')
           echo "$checksum  $RUNNER_TEMP/harmony-sdk.zip" | sha256sum --check
           mkdir -p "$RUNNER_TEMP/harmony"
-          unzip -q "$RUNNER_TEMP/harmony-sdk.zip" -d "$RUNNER_TEMP/harmony" -x 'command-line-tools/sdk/default/*/native/*' 'command-line-tools/sdk/default/*/previewer/*'
+          unzip -q "$RUNNER_TEMP/harmony-sdk.zip" -d "$RUNNER_TEMP/harmony"
       - name: Configure SDK
         shell: bash
         run: |
@@ -50,6 +50,12 @@ jobs:
           echo "$clt/tool/node/bin" >> "$GITHUB_PATH"
           echo "DEVECO_SDK_HOME=$clt/sdk" >> "$GITHUB_ENV"
           chmod +x "$clt/bin/ohpm" "$clt/bin/hvigorw" "$clt/tool/node/bin/node"
+      - name: Save complete SDK cache
+        if: steps.sdk-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/harmony/command-line-tools
+          key: harmony-clt-linux-5.1.0.840-full-v2
       - name: Stage local editor and check native bridge
         run: |
           node scripts/prepare-harmony.cjs
