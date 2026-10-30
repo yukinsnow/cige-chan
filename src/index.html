@@ -84,9 +84,16 @@ header{position:sticky;top:0;z-index:30;background:var(--panel);border-bottom:1p
 #title{background:transparent;border:none;font-size:17px;font-weight:700;letter-spacing:.5px;padding:4px 6px;border-radius:6px;min-width:150px;width:210px}
 #title:focus{outline:none;background:var(--panel2)}
 .sep{width:1px;height:22px;background:var(--line);margin:0 3px}
-/* 窄屏触控设备用换行分组；平板和桌面保留竖线。 */
+.file-actions{display:contents}
+/* 窄屏触控设备将文件操作固定为一排，其余操作紧凑排列。 */
 @media (max-width:600px) and (pointer:coarse){
-  .bar > .sep{flex:0 0 100%;width:0;height:0;margin:0;background:none}
+  .bar{gap:6px}
+  .bar > .sep,.file-actions > .sep,.bar > .grow{display:none}
+  .file-actions{display:flex;flex:0 0 100%;gap:6px}
+  .file-actions > button,.file-actions > .menuwrap{flex:1;min-width:0}
+  .file-actions > .menuwrap > button{width:100%;justify-content:center}
+  .bar > button,.bar > .menuwrap{order:1}
+  .bar > button,.bar > .menuwrap > button,.file-actions > button,.file-actions > .menuwrap > button{min-height:44px;padding:5px 8px}
 }
 .grow{flex:1}
 .tag{font-size:11px;color:var(--dim);letter-spacing:1px;border:1px solid var(--line);padding:2px 7px;border-radius:20px}
@@ -316,8 +323,9 @@ pre{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padd
     <div class="sep"></div>
     <button id="new" data-i18n="btnNew">新建</button>
     <button id="recoverProject" data-i18n-title="recoverProject" aria-label="恢复上次替换前的工程">↶</button>
-    <button id="impj" data-i18n="btnImpProj">打开工程</button>
-    <button id="expJ" data-i18n="btnExpProj">保存工程</button>
+    <div class="file-actions">
+    <button id="impj" data-i18n="btnImpProj">打开</button>
+    <button id="expJ" data-i18n="btnExpProj">保存</button>
     <div class="sep"></div>
     <div class="menuwrap">
       <button id="impBtn" class="menubtn"><span data-i18n="btnImpMenu">导入</span><i class="car">▾</i></button>
@@ -335,6 +343,7 @@ pre{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padd
         <button id="expMc" data-i18n="btnExpMidiClean" data-i18n-title="btnExpMidiCleanTitle" title="去掉 keyswitch 的纯净 MIDI，需要先「导入 MIDI」">导出纯净 MIDI</button>
         <button id="expMl" data-i18n="btnExpMidiLyr" data-i18n-title="btnExpMidiLyrTitle" title="导出带歌词的 MIDI（先核对词格是否跟 MIDI 对得上，对不上会拦住）">导出带歌词 MIDI</button>
       </div>
+    </div>
     </div>
     <div class="grow"></div>
     <button id="reflow" data-i18n="btnReflow" data-i18n-title="btnReflowTitle" title="把每句超出的字顺移到下一句">整理溢出</button>

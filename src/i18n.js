@@ -11,9 +11,9 @@ zh: {
   autoSectionName: n => `段落 ${n}`,
 
   btnImpMenu: "导入", btnExpMenu: "导出",
-  btnImpTxt: "导入词格 TXT", btnImpProj: "打开工程",
+  btnImpTxt: "导入词格 TXT", btnImpProj: "打开",
   btnImpMidi: "导入 MIDI", btnImpMidiTitle: "按 keyswitch（C0 分句／C#0 换句／D0 换段）自动生成词格",
-  btnExpLyr: "导出歌词", btnExpPat: "导出词格", btnExpProj: "保存工程",
+  btnExpLyr: "导出歌词", btnExpPat: "导出词格", btnExpProj: "保存",
   btnExpMidiClean: "导出纯净 MIDI", btnExpMidiCleanTitle: "去掉 keyswitch 的纯净 MIDI，需要先「导入 MIDI」",
   btnExpMidiLyr: "导出带歌词 MIDI", btnExpMidiLyrTitle: "导出带歌词的 MIDI（先核对词格是否跟 MIDI 对得上，对不上会拦住）",
   btnReflow: "整理溢出", btnReflowTitle: "把每句超出的字顺移到下一句",
@@ -230,9 +230,9 @@ zhHant: {
   autoSectionName: n => `段落 ${n}`,
 
   btnImpMenu: "匯入", btnExpMenu: "匯出",
-  btnImpTxt: "匯入詞格 TXT", btnImpProj: "開啟工程",
+  btnImpTxt: "匯入詞格 TXT", btnImpProj: "開啟",
   btnImpMidi: "匯入 MIDI", btnImpMidiTitle: "按 keyswitch（C0 分句／C#0 換句／D0 換段）自動生成詞格",
-  btnExpLyr: "匯出歌詞", btnExpPat: "匯出詞格", btnExpProj: "儲存工程",
+  btnExpLyr: "匯出歌詞", btnExpPat: "匯出詞格", btnExpProj: "儲存",
   btnExpMidiClean: "匯出純淨 MIDI", btnExpMidiCleanTitle: "去掉 keyswitch 的純淨 MIDI，需要先「匯入 MIDI」",
   btnExpMidiLyr: "匯出帶歌詞 MIDI", btnExpMidiLyrTitle: "匯出帶歌詞的 MIDI（先核對詞格是否跟 MIDI 對得上，對不上會攔住）",
   btnReflow: "整理溢位", btnReflowTitle: "把每句超出的字順移到下一句",
