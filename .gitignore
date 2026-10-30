@@ -12,3 +12,14 @@ Thumbs.db
 
 src-tauri/gen/android/keystore.properties
 *.jks
+# HarmonyOS generated files
+/src-harmony/.hvigor/
+/src-harmony/oh_modules/
+/src-harmony/oh-package-lock.json5
+/src-harmony/local.properties
+/src-harmony/build/
+/src-harmony/entry/build/
+/src-harmony/entry/oh_modules/
+/src-harmony/entry/oh-package-lock.json5
+/src-harmony/entry/src/main/resources/rawfile/web/
+/src-harmony/AppScope/resources/base/media/icon.png
