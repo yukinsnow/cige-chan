@@ -4,6 +4,7 @@
 const I18N = {
 
 zh: {
+  recoverProject: "恢复上次替换前的工程",
   brand: "词格酱", tagline: "中文歌词写作台", untitled: "未命名歌曲",
   helpTitleFull: "词格酱 · 中文歌词写作台",
   newSectionName: "新段落",
@@ -222,6 +223,7 @@ zh: {
 },
 
 zhHant: {
+  recoverProject: "復原上次替換前的工程",
   brand: "詞格醬", tagline: "中文歌詞寫作臺", untitled: "未命名歌曲",
   helpTitleFull: "詞格醬 · 中文歌詞寫作臺",
   newSectionName: "新段落",
@@ -440,6 +442,7 @@ zhHant: {
 },
 
 ja: {
+  recoverProject: "置き換え前のプロジェクトを復元",
   brand: "CigeChan", tagline: "歌詞ライティングデスク", untitled: "無題の曲",
   helpTitleFull: "CigeChan · 歌詞ライティングデスク",
   newSectionName: "新しいセクション",
@@ -658,6 +661,7 @@ ja: {
 },
 
 ko: {
+  recoverProject: "교체 전 프로젝트 복원",
   brand: "CigeChan", tagline: "가사 작성 도구", untitled: "제목 없는 곡",
   helpTitleFull: "CigeChan · 가사 작성 도구",
   newSectionName: "새 섹션",

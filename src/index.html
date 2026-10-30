@@ -285,6 +285,19 @@ pre{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padd
   border-radius:8px;padding:8px 10px;font-size:11.5px;line-height:1.7;color:var(--dim);
   font-family:ui-monospace,monospace;display:flex;flex-direction:column;gap:2px}
 .ailog:empty{display:none}
+@media (pointer:coarse){
+  .sechead,.sectools,.tools{flex-wrap:wrap}
+  .secname{max-width:100%;min-width:0}
+  .secmeta{white-space:nowrap}
+  .tools,.sectools{max-width:100%;gap:6px}
+  .extra{padding-left:8px;min-width:0;max-width:100%}
+  .tools button,.sectools button,.addline,.vc,.vadd{min-height:44px;min-width:44px}
+  .secname,.note,.pat-edit,.airow input,.airow textarea,.aiadv select{font-size:16px}
+  .io{font-size:max(16px,calc(var(--cell)*.62))}
+  .card{max-height:calc(var(--visible-height,100dvh) - 48px - var(--sat) - var(--sab))}
+  #help,#exp,#bgp,#aip{top:var(--visible-top,0px);bottom:auto;height:var(--visible-height,100dvh);box-sizing:border-box}
+  html.keyboard-open footer{display:none}
+}
 </style>
 </head>
 <body>
@@ -298,6 +311,7 @@ pre{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padd
     <input id="title" value="未命名歌曲" spellcheck="false">
     <div class="sep"></div>
     <button id="new" data-i18n="btnNew">新建</button>
+    <button id="recoverProject" data-i18n-title="recoverProject" aria-label="恢复上次替换前的工程">↶</button>
     <button id="impj" data-i18n="btnImpProj">打开工程</button>
     <button id="expJ" data-i18n="btnExpProj">保存工程</button>
     <div class="sep"></div>
@@ -573,7 +587,7 @@ function t(key, ...args){
 function applyI18n(){
   document.documentElement.lang = LOCALE[state.lang] || "zh-CN";
   document.querySelectorAll("[data-i18n]").forEach(e=>{ e.innerHTML = t(e.dataset.i18n); });
-  document.querySelectorAll("[data-i18n-title]").forEach(e=>{ e.title = t(e.dataset.i18nTitle); });
+  document.querySelectorAll("[data-i18n-title]").forEach(e=>{ e.title = t(e.dataset.i18nTitle); if(e.hasAttribute("aria-label")) e.setAttribute("aria-label",e.title); });
   document.querySelectorAll("[data-i18n-placeholder]").forEach(e=>{ e.placeholder = t(e.dataset.i18nPlaceholder); });
   document.title = state.title + " · " + t("brand");
   const langLab = $("#langLabel"); if(langLab) langLab.textContent = LANG_NAME[state.lang] || LANG_NAME.zh;
@@ -770,7 +784,7 @@ function render(){
   restoreFocus(); stats(); save();
 }
 
-function btn(txt,title,fn){ const b = el("button"); b.textContent = txt; b.title = title; b.onclick = fn; return b; }
+function btn(txt,title,fn){ const b = el("button"); b.textContent = txt; b.title = title; b.setAttribute("aria-label",title); b.onclick = fn; return b; }
 
 function rowEl(sec,si,L,li){
   const R = el("div","row"); R.dataset.si = si; R.dataset.li = li;
@@ -866,7 +880,7 @@ function rowEl(sec,si,L,li){
   nt.value = L.note; nt.placeholder = t("notePlaceholder");
   nt.oninput = ()=>{ L.note = nt.value; R.classList.toggle("hasx", !!(L.alts.length || L.note)); save(); };
   // 备注框放在版本条后面，这样重建版本条不会打断正在输入的备注
-  nt.onkeydown = e=>{ if(e.key === "Enter" || e.key === "Escape"){ e.preventDefault(); io.focus(); } };
+  nt.onkeydown = e=>{ if(!e.isComposing && e.keyCode !== 229 && (e.key === "Enter" || e.key === "Escape")){ e.preventDefault(); io.focus(); } };
   ex.appendChild(nt);
   R.appendChild(ex);
 
@@ -971,6 +985,7 @@ function rowEl(sec,si,L,li){
   R._seek = seek;
 
   io.addEventListener("keydown",e=>{
+    if(composing || e.isComposing || e.keyCode === 229) return;
     const mod = e.metaKey || e.ctrlKey;
     const p = charToCell(CL(io.value), io.selectionStart);   // 当前光标所在格子下标
     if(mod && e.key === "]"){ e.preventDefault(); chg(L,1,p);  redrawRow(si,li,p); return; }
@@ -1180,15 +1195,45 @@ function stats(){
 
 /* ================= persistence ================= */
 const LOCALE = { zh:"zh-CN", zhHant:"zh-TW", ja:"ja-JP", ko:"ko-KR" };
-let saveT = null;
-function save(){
-  clearTimeout(saveT);
-  saveT = setTimeout(()=>{ try{ localStorage.setItem("cige.v1", JSON.stringify(state)); $("#saved").textContent = t("autosavedAt", new Date().toLocaleTimeString(LOCALE[state.lang]||"zh-CN",{hour:"2-digit",minute:"2-digit"})); }catch(e){ $("#saved").textContent = t("autosaveUnavailable"); } },400);
+let saveT = null, saveDirty = false;
+function flushSave(){
+  clearTimeout(saveT); saveT = null;
+  if(!saveDirty) return true;
+  try{
+    localStorage.setItem("cige.v1",JSON.stringify(state)); saveDirty = false;
+    $("#saved").textContent = t("autosavedAt",new Date().toLocaleTimeString(LOCALE[state.lang]||"zh-CN",{hour:"2-digit",minute:"2-digit"}));
+    return true;
+  }catch(e){ $("#saved").textContent = t("autosaveUnavailable"); return false; }
+}
+function save(){ saveDirty = true; clearTimeout(saveT); saveT = setTimeout(flushSave,400); }
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState === "hidden") flushSave(); });
+addEventListener("pagehide",flushSave);
+// Validate detached data, including resource limits, before replacing a draft.
+function validateSections(sections){
+  if(!Array.isArray(sections) || !sections.length || sections.length > 500) throw Error("Invalid sections");
+  let cells = 0, lines = 0;
+  return sections.map(sec=>{
+    if(!sec || typeof sec !== "object" || !Array.isArray(sec.lines)) throw Error("Invalid section");
+    const clean = {name:typeof sec.name === "string" ? sec.name : "",lines:[]};
+    for(const line of sec.lines){
+      if(++lines > 5000 || !line || typeof line !== "object") throw Error("Invalid line");
+      const L = {g:line.g,t:line.t,alts:line.alts,note:line.note};
+      if(!Array.isArray(L.g) || !L.g.length || L.g.some(n=>!Number.isSafeInteger(n) || n < 1 || n > 1000)) throw Error("Invalid pattern");
+      cells += L.g.reduce((a,b)=>a+b,0);
+      if(cells > 50000) throw Error("Project too large");
+      norm(L); clean.lines.push(L);
+    }
+    if(!clean.lines.length) clean.lines.push(newLine());
+    return clean;
+  });
+}
+function backupProject(){
+  localStorage.setItem("cige.recovery.v1",JSON.stringify({title:state.title,sections:state.sections,exp:state.exp}));
 }
 function load(){
   try{ const s = localStorage.getItem("cige.v1"); if(!s) return false;
     const o = JSON.parse(s);
-    if(o && Array.isArray(o.sections) && o.sections.length){ state = Object.assign(state,o); return true; }
+    if(o && Array.isArray(o.sections) && o.sections.length){ o.sections = validateSections(o.sections); state = Object.assign(state,o); return true; }
   }catch(e){}
   return false;
 }
@@ -1198,6 +1243,14 @@ function load(){
    两种环境共用同一份代码，浏览器打开这个文件时行为和以前完全一样。 */
 const TAURI = (typeof window !== "undefined" && window.__TAURI__) ? window.__TAURI__ : null;
 
+// System share is offered only where files are supported; desktop keeps downloads.
+async function shareExport(name,blob){
+  if(!matchMedia("(pointer:coarse)").matches || !navigator.share || !navigator.canShare) return false;
+  const file = new File([blob],name,{type:blob.type});
+  if(!navigator.canShare({files:[file]})) return false;
+  try{ await navigator.share({files:[file]}); return true; }
+  catch(e){ return e.name === "AbortError"; } // Cancellation must not start a download.
+}
 async function download(name,text){
   if(TAURI){
     const ext = (name.split(".").pop() || "txt").toLowerCase();
@@ -1213,7 +1266,8 @@ async function download(name,text){
     }catch(e){ toast(t("toastSaveFail", e)); }
     return;
   }
-  const b = new Blob([text],{type:"text/plain;charset=utf-8"});
+  const b = new Blob([text],{type:/\.json$/i.test(name) ? "application/json" : "text/plain;charset=utf-8"});
+  if(await shareExport(name,b)) return;
   const a = el("a"); a.href = URL.createObjectURL(b); a.download = name; a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
@@ -1231,6 +1285,7 @@ async function downloadBinary(name, bytes){
     return;
   }
   const b = new Blob([bytes], {type:"audio/midi"});
+  if(await shareExport(name,b)) return;
   const a = el("a"); a.href = URL.createObjectURL(b); a.download = name; a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
@@ -1267,10 +1322,13 @@ function lyrTxt(o){
 }
 
 function applyTxt(text){
-  const { title, secs } = parseTxt(text);
+  let { title, secs } = parseTxt(text);
   if(!secs.length){ toast(t("toastNoParse")); return; }
+  try{ secs = validateSections(secs); }catch(e){ toast(t("toastInvalidProject")); return; }
+  try{ backupProject(); }catch(e){ toast(t("autosaveUnavailable")); return; }
+  midiImport = null;
   if(title){ state.title = title; $("#title").value = title; }
-  state.sections = secs; normAll(); focusRef = null; render();
+  state.sections = secs; focusRef = null; render();
   toast(t("toastImported", secs.length, secs.reduce((a,s)=>a+s.lines.length,0)));
 }
 /* ================= MIDI 导入（实验功能） =================
@@ -1389,8 +1447,10 @@ function applyMidi(buf){
   /* 整份文件一个 keyswitch 都没有：所有音符会挤成一句，导进来还得自己一句句
      切开。先把话说清楚再让人决定，免得白导一次、还把当前内容顶掉。 */
   if(!notes.some(n => MIDI_KS[n.note]) && !confirm(t("confirmMidiNoKs", notes.length))) return;
+  try{ secs = validateSections(secs); }catch(e){ toast(t("toastInvalidProject")); return; }
+  try{ backupProject(); }catch(e){ toast(t("autosaveUnavailable")); return; }
   midiImport = {parsed, notes};
-  state.sections = secs; normAll(); focusRef = null; render();
+  state.sections = secs; focusRef = null; render();
   toast(t("toastMidiImported", secs.length, secs.reduce((a,s)=>a+s.lines.length,0)));
 }
 
@@ -1531,11 +1591,15 @@ function buildLyricMidi(){
 }
 
 function applyJson(text){
-  try{ const o = JSON.parse(text);
-    if(!o.sections || !Array.isArray(o.sections)) throw 0;
-    state.title = o.title || t("untitled"); state.sections = o.sections;
+  let o, sections;
+  try{ o = JSON.parse(text); sections = validateSections(o.sections); }
+  catch(e){ toast(t("toastInvalidProject")); return; }
+  try{ backupProject(); }
+  catch(e){ toast(t("autosaveUnavailable")); return; }
+  try{
+    midiImport = null;
+    state.title = typeof o.title === "string" && o.title ? o.title : t("untitled"); state.sections = sections;
     if(o.exp) state.exp = {alts:!!o.exp.alts, note:!!o.exp.note};
-    normAll();
     $("#title").value = state.title; focusRef = null; render(); toast(t("toastProjectOpened"));
   }catch(e){ toast(t("toastInvalidProject")); }
 }
@@ -1794,11 +1858,13 @@ $("#bgblur").oninput = e=>{ state.bg.blur = +e.target.value;     $("#bgblurv").t
   });
 })();
 $("#new").onclick = ()=>{ if(!confirm(t("confirmNew"))) return;
+  try{ backupProject(); }catch(e){ toast(t("autosaveUnavailable")); return; }
+  midiImport = null;
   state.title = t("untitled"); state.sections = JSON.parse(JSON.stringify(SAMPLE)); normAll(); $("#title").value = state.title; focusRef=null; render(); };
 $("#helpb").onclick = ()=>$("#help").classList.add("show");
 $("#helpClose").onclick = ()=>$("#help").classList.remove("show");
 $("#help").onclick = e=>{ if(e.target.id === "help") $("#help").classList.remove("show"); };
-addEventListener("keydown",e=>{ if(e.key === "Escape"){ $("#help").classList.remove("show"); $("#exp").classList.remove("show"); $("#bgp").classList.remove("show"); if(window.aiClosePanel) aiClosePanel(); closeAllMenus(); } });
+addEventListener("keydown",e=>{ if(!e.isComposing && e.keyCode !== 229 && e.key === "Escape"){ $("#help").classList.remove("show"); $("#exp").classList.remove("show"); $("#bgp").classList.remove("show"); if(window.aiClosePanel) aiClosePanel(); closeAllMenus(); } });
 $("#reflow").onclick = ()=>{
   let moved = 0;
   for(const sec of state.sections){
@@ -1872,6 +1938,23 @@ $("#langMenu").querySelectorAll("button[data-lang]").forEach(b=>{
   };
 });
 
+/* ================= mobile viewport ================= */
+function syncViewport(){
+  const v = window.visualViewport, h = v ? v.height : innerHeight;
+  document.documentElement.style.setProperty("--visible-height",h+"px");
+  document.documentElement.style.setProperty("--visible-top",(v ? v.offsetTop : 0)+"px");
+  const editing = document.activeElement && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName);
+  document.documentElement.classList.toggle("keyboard-open",!!editing && innerHeight-h > 150);
+}
+if(window.visualViewport){
+  visualViewport.addEventListener("resize",syncViewport);
+  visualViewport.addEventListener("scroll",syncViewport);
+}
+addEventListener("resize",syncViewport);
+document.addEventListener("focusin",syncViewport);
+document.addEventListener("focusout",()=>requestAnimationFrame(syncViewport));
+syncViewport();
+
 /* ================= boot ================= */
 load();
 if(!state.exp) state.exp = {alts:false, note:false};
@@ -1892,6 +1975,16 @@ applyAccent();
 applyI18n();
 $("#title").value = state.title;
 setCell(state.cell);
+{
+  const recover = $("#recoverProject");
+  recover.onclick = ()=>{
+    try{
+      const backup = localStorage.getItem("cige.recovery.v1");
+      if(!backup){ toast(t("autosaveUnavailable")); return; }
+      if(confirm(recover.title)) applyJson(backup);
+    }catch(e){ toast(t("autosaveUnavailable")); }
+  };
+}
 aiBind();          // AI 填词面板（ai.js）：绑定事件、面板显隐、按钮
 aiInjectHelp();    // 帮助面板末尾追加 AI 使用说明
 render();

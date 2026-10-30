@@ -271,6 +271,23 @@ function aiStop(){
   aiSetProgress(aiProgDone, aiProgTotal, t("aiStopping"));
 }
 
+function aiRefreshRows(){
+  document.querySelectorAll(".row").forEach(R=>{
+    const sec = state.sections[Number(R.dataset.si)];
+    const L = sec && sec.lines[Number(R.dataset.li)];
+    if(L){
+      const io = R.querySelector(".io");
+      if(composing && document.activeElement === io) return;
+      if(io.value !== L.t){
+        const start = io.selectionStart, end = io.selectionEnd, direction = io.selectionDirection;
+        io.value = L.t;
+        if(document.activeElement === io){ io.setSelectionRange(start,end,direction); R._mark(io.selectionStart); }
+      }
+      paint(R,L); R._vers();
+    }
+  });
+  stats(); save();
+}
 async function aiRunAll(mode){
   if(aiBusy) return;
   if(!aiNormBase(aiCfg.baseUrl) || !aiCfg.apiKey || !aiCfg.model){
@@ -296,7 +313,12 @@ async function aiRunAll(mode){
         if(aiAbort.cancelled){ stopped = true; break; }
         aiSetProgress(aiProgDone, aiProgTotal, t("aiProgress", item.si + 1, item.li + 1));
         try{
+          const before = JSON.stringify(item.L);
           const r = await aiFillLine(item.sec, item.L, { signal });
+          if(aiAbort.cancelled){ stopped = true; break; }
+          if(composing || !state.sections.includes(item.sec) || !item.sec.lines.includes(item.L) || JSON.stringify(item.L) !== before){
+            skip++; aiProgDone++; continue;
+          }
           aiApplyLineText(item.L, r.text);
           if(r.note) notes.push(t("aiNoteLine", item.si + 1, item.li + 1) + " " + r.note);
           ok++;
@@ -306,7 +328,7 @@ async function aiRunAll(mode){
           notes.push(t("aiNoteLine", item.si + 1, item.li + 1) + " " + t("aiSkipFail", e.message));
         }
         aiProgDone++;
-        render();
+        aiRefreshRows();
       }
     }else{
       /* 检查/润色：整首一起交给 AI 审，返回逐句建议，逐句本地校验后才采用 */
@@ -321,6 +343,9 @@ async function aiRunAll(mode){
             "\n输出 JSON：{\"suggestions\":[{\"sec\":段落序号(从1起),\"line\":句序号(段内从1起),\"text\":\"替换文本(分句间用空格分隔)\",\"why\":\"一句话理由\"}]}。" +
             "\n没有值得改的就返回 {\"suggestions\":[]}。" }
       ];
+      const beforeSections = state.sections;
+      const beforeLines = new Map(scopeLines.map(x=>[x.L,JSON.stringify(x.L)]));
+      const beforePositions = new Map(scopeLines.map(x=>[x.si+":"+x.li,x.L]));
       const raw = await aiChat(messages, { signal });
       let j;
       try{ j = aiParseJson(raw); }
@@ -334,6 +359,7 @@ async function aiRunAll(mode){
         const sec = state.sections[(s.sec | 0) - 1];
         const L = sec && sec.lines[(s.line | 0) - 1];
         if(!L) continue;
+        if(composing || state.sections !== beforeSections || beforePositions.get(((s.sec | 0)-1)+":"+((s.line | 0)-1)) !== L || beforeLines.get(L) !== JSON.stringify(L)){ skip++; continue; }
         if(scopeSi !== null && (s.sec | 0) - 1 !== scopeSi) continue;   // 范围外建议直接忽略，不计失败
         const chk = aiCheckFill(s.text, L.g);
         if(chk !== null){ skip++; notes.push(t("aiNoteLine", s.sec, s.line) + " " + t("aiSkipFail", chk)); continue; }
@@ -342,7 +368,6 @@ async function aiRunAll(mode){
         if(s.why) notes.push(t("aiNoteLine", s.sec, s.line) + " " + oldText + " → " + RT(L.t) + "（" + s.why + "）");
         ok++;
       }
-      render();
     }
   }catch(e){
     if(e.aiAborted) stopped = true;
@@ -350,7 +375,7 @@ async function aiRunAll(mode){
   }finally{
     aiAbort = null;
     aiSetBusy(false);
-    render();
+    aiRefreshRows();
     const secs = ((Date.now() - startedAt) / 1000).toFixed(1);
     let summary;
     if(stopped) summary = t("aiDoneStopped", ok, skip, secs);
@@ -364,7 +389,6 @@ async function aiRunAll(mode){
       toast(summary);
     }
     const pend = $("#aipending"); if(pend) pend.textContent = t("aiPending", aiPendingLines().length);
-    save();
   }
 }
 
@@ -465,7 +489,7 @@ function aiBind(){
 
   /* Escape 关面板，跟 help/exp/bgp 一致（运行中会被 aiClosePanel 拦下） */
   document.addEventListener("keydown", e => {
-    if(e.key === "Escape" && $("#aip").classList.contains("show")) aiClosePanel();
+    if(!e.isComposing && e.keyCode !== 229 && e.key === "Escape" && $("#aip").classList.contains("show")) aiClosePanel();
   });
 }
 

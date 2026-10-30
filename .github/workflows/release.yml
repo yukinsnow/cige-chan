@@ -1,16 +1,72 @@
-name: 构建三平台免安装包
+name: 构建验证与安装包
 
 on:
   push:
     tags:
       - 'v*'
+    branches:
+      - 'codex/ios-optimization'
   workflow_dispatch:        # 也可以在 Actions 页面手动点一下就构建
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   APP_NAME: cige-chan       # 对应 tauri.conf.json 里的 mainBinaryName
 
 jobs:
+  web-tests:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save playwright@1.62.1
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/verify-mobile.cjs
+
+  ios-simulator:
+    if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios-sim
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+      - run: brew install xcodegen
+      - run: npm install
+      - name: Initialize iOS project
+        run: npx tauri ios init --ci --skip-targets-install
+      - name: Build unsigned iOS simulator app
+        run: npx tauri ios build --ci --target aarch64-sim -- CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+      - name: Collect simulator app
+        shell: bash
+        run: |
+          mkdir -p dist
+          app=$(find src-tauri/gen/apple -type d -name '*.app' -path '*iphonesimulator*' -print -quit)
+          test -n "$app"
+          ditto -c -k --sequesterRsrc --keepParent "$app" dist/cige-chan-ios-simulator.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator
+          path: dist/*
+          if-no-files-found: error
+
   build:
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -103,7 +159,7 @@ jobs:
 
   release:
     needs: build
-    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
       contents: write
