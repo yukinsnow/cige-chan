@@ -84,6 +84,10 @@ header{position:sticky;top:0;z-index:30;background:var(--panel);border-bottom:1p
 #title{background:transparent;border:none;font-size:17px;font-weight:700;letter-spacing:.5px;padding:4px 6px;border-radius:6px;min-width:150px;width:210px}
 #title:focus{outline:none;background:var(--panel2)}
 .sep{width:1px;height:22px;background:var(--line);margin:0 3px}
+/* 窄屏触控设备用换行分组；平板和桌面保留竖线。 */
+@media (max-width:600px) and (pointer:coarse){
+  .bar > .sep{flex:0 0 100%;width:0;height:0;margin:0;background:none}
+}
 .grow{flex:1}
 .tag{font-size:11px;color:var(--dim);letter-spacing:1px;border:1px solid var(--line);padding:2px 7px;border-radius:20px}
 /* 应用图标。整个界面是一个自包含的 html，不外链任何资源，所以图标只在
