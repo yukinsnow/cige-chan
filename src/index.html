@@ -89,11 +89,13 @@ header{position:sticky;top:0;z-index:30;background:var(--panel);border-bottom:1p
 @media (max-width:600px) and (pointer:coarse){
   .bar{gap:6px}
   .bar > .sep,.file-actions > .sep,.bar > .grow{display:none}
-  .file-actions{display:flex;flex:0 0 100%;gap:6px}
+  .file-actions{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));flex:0 0 100%;gap:4px}
   .file-actions > button,.file-actions > .menuwrap{flex:1;min-width:0}
   .file-actions > .menuwrap > button{width:100%;justify-content:center}
   .bar > button,.bar > .menuwrap{order:1}
-  .bar > button,.bar > .menuwrap > button,.file-actions > button,.file-actions > .menuwrap > button{min-height:44px;padding:5px 8px}
+  .bar > button,.bar > .menuwrap > button,.file-actions > button,.file-actions > .menuwrap > button{min-height:44px;padding:5px 6px}
+  .file-actions > button,.file-actions > .menuwrap > button{padding:5px 2px;white-space:nowrap}
+  .file-actions > .menuwrap > button{gap:2px}
 }
 .grow{flex:1}
 .tag{font-size:11px;color:var(--dim);letter-spacing:1px;border:1px solid var(--line);padding:2px 7px;border-radius:20px}
@@ -321,9 +323,9 @@ pre{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padd
     <span class="tag" data-i18n="brand">词格酱</span>
     <input id="title" value="未命名歌曲" spellcheck="false">
     <div class="sep"></div>
+    <div class="file-actions">
     <button id="new" data-i18n="btnNew">新建</button>
     <button id="recoverProject" data-i18n-title="recoverProject" aria-label="恢复上次替换前的工程">↶</button>
-    <div class="file-actions">
     <button id="impj" data-i18n="btnImpProj">打开</button>
     <button id="expJ" data-i18n="btnExpProj">保存</button>
     <div class="sep"></div>
