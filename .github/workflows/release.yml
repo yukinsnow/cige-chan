@@ -4,15 +4,18 @@ on:
   push:
     tags:
       - 'v*'
-    branches:
-      - 'codex/ios-optimization'
-  workflow_dispatch:        # 也可以在 Actions 页面手动点一下就构建
+  workflow_dispatch:
+    inputs:
+      ios_only:
+        description: Only rebuild the iOS simulator app
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 concurrency:
-  group: build-${{ github.ref }}
+  group: build-${{ github.ref }}-${{ inputs.ios_only || false }}
   cancel-in-progress: true
 
 env:
@@ -20,6 +23,7 @@ env:
 
 jobs:
   web-tests:
+    if: ${{ !inputs.ios_only }}
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
@@ -51,12 +55,12 @@ jobs:
       - name: Initialize iOS project
         run: npx tauri ios init --ci --skip-targets-install
       - name: Build unsigned iOS simulator app
-        run: npx tauri ios build --ci --target aarch64-sim -- CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+        run: npx tauri ios build --ci --target aarch64-sim
       - name: Collect simulator app
         shell: bash
         run: |
           mkdir -p dist
-          app=$(find src-tauri/gen/apple -type d -name '*.app' -path '*iphonesimulator*' -print -quit)
+          app=$(find "$HOME/Library/Developer/Xcode/DerivedData" src-tauri/gen/apple -type d -name 'CigeChan.app' -path '*iphonesimulator*' -print -quit)
           test -n "$app"
           ditto -c -k --sequesterRsrc --keepParent "$app" dist/cige-chan-ios-simulator.zip
       - uses: actions/upload-artifact@v4
@@ -66,6 +70,7 @@ jobs:
           if-no-files-found: error
 
   build:
+    if: ${{ !inputs.ios_only }}
     timeout-minutes: 40
     strategy:
       fail-fast: false
