@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import zipfile
+from verify_ios_icons import verify_icons
 
 
 def verify(ipa_path):
@@ -26,6 +27,9 @@ def verify(ipa_path):
             raise ValueError("Unexpected bundle identifier")
         if info.get("CFBundleShortVersionString") != config["version"]:
             raise ValueError("Unexpected app version")
+        if info.get("CFBundleIcons", {}).get("CFBundlePrimaryIcon", {}).get("CFBundleIconName") != "AppIcon":
+            raise ValueError("Unexpected primary icon catalog")
+        icons = verify_icons(archive, infos[0].removesuffix("Info.plist"), ipa_path.parent)
         executable = info["CFBundleExecutable"]
         if not isinstance(executable, str) or "/" in executable or executable in ("", ".", ".."):
             raise ValueError("Invalid executable name")
@@ -47,6 +51,7 @@ def verify(ipa_path):
         "minimumIOSVersion": info.get("MinimumOSVersion"),
         "architecture": archs,
         "platform": "iPhoneOS",
+        "verifiedIcons": icons,
         "signing": "unsigned; must be signed before installation",
     }
 

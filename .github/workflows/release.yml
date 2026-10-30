@@ -62,6 +62,8 @@ jobs:
       - run: npm install --no-save @tauri-apps/cli@2.12.4
       - name: Initialize iOS project
         run: npx tauri ios init --ci --skip-targets-install
+      - name: Stage CigeChan app icons
+        run: node scripts/stage-ios-icons.cjs
       - name: Build iOS app
         env:
           IOS_TARGET: ${{ inputs.ios_target || 'simulator' }}
