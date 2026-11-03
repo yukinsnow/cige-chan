@@ -8,12 +8,13 @@
     "dev:web": "vite",
     "build:web": "vite build",
     "preview": "vite preview",
-    "test": "node tests/roundtrip.test.mjs && node tests/rhyme.test.mjs",
+    "test": "node tests/roundtrip.test.mjs && node tests/rhyme.test.mjs && node tests/validate.test.mjs",
     "tauri": "tauri",
     "dev": "tauri dev",
     "build": "tauri build",
     "gen:rhyme": "node scripts/gen-rhyme.mjs",
-    "ios:icons": "node scripts/ios-icons.mjs"
+    "ios:icons": "node scripts/ios-icons.mjs",
+    "ios:stage": "node scripts/stage-ios-icons.cjs && node scripts/stage-ios-localizations.cjs"
   },
   "dependencies": {
     "lucide": "^1.41.0",

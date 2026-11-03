@@ -595,7 +595,18 @@ footer:hover .statcopy,.statcopy:focus-visible{opacity:1}
   main{padding-left:calc(12px + var(--sal));padding-right:calc(12px + var(--sar))}
   .bar{padding:7px 12px;gap:6px}
   .tstrip{padding-left:12px;padding-right:12px}
+  .bar-r{margin-left:0;flex-basis:100%;justify-content:flex-start}
 }
+/* 窄屏触控 工具栏必然折行 分隔线和撑开的空白折到行首行尾只会留下歪掉的缝 按钮均分每一行 */
+@media (max-width: 640px) and (pointer:coarse){
+  .bar>.sep,.bar>.grow{display:none}
+  .bar>button,.bar>.menuwrap{flex:1 0 auto}
+  .bar>.menuwrap>button{width:100%}
+}
+/* iOS 键盘盖住的那截 弹层让出来 底栏先收起 不然输入框会被顶到键盘后面 */
+html.kb-open footer{display:none}
+html.kb-open #help,html.kb-open #exp,html.kb-open #settings,html.kb-open #lrc,html.kb-open #aip{bottom:var(--kb,0px)}
+html.kb-open .card{max-height:calc(100% - 24px)}
 /* 触屏统一放宽点击区，44px 是能稳定点中的下限 */
 @media (pointer:coarse){
   button{padding:9px 13px}

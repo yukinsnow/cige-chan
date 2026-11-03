@@ -6,10 +6,10 @@ import { toggleMenu } from '../ui/menu.js';
 import { aiUi, aiOpenPanel, aiClosePanel } from '../ai.js';
 import Icon from './Icon.vue';
 import { toggleAid } from '../ui/aid.js';
-import { ChevronDown, CircleHelp, Settings, SpellCheck } from 'lucide';
+import { ChevronDown, CircleHelp, History, Settings, SpellCheck } from 'lucide';
 
 defineProps({
-  onNew: Function, onOpenProj: Function, onSaveProj: Function,
+  onNew: Function, onRecover: Function, onOpenProj: Function, onSaveProj: Function,
   onImpTxt: Function, onImpMidi: Function, onImpSvp: Function,
   onExpPat: Function, onExpMidiClean: Function, onExpMidiLyr: Function,
   onReflow: Function,
@@ -25,6 +25,8 @@ function toggleAi() {
 <template>
   <div class="bar">
     <button @click="onNew">{{ t('btnNew') }}</button>
+    <button :data-tip="t('recoverProject')" :aria-label="t('recoverProject')" @click="onRecover">
+      <Icon :node="History" /></button>
     <button @click="onOpenProj">{{ t('btnImpProj') }}</button>
     <button @click="onSaveProj">{{ t('btnExpProj') }}</button>
     <div class="sep"></div>

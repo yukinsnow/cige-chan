@@ -1,7 +1,7 @@
 import './style.css';
 import { createApp, watchEffect } from 'vue';
 import App from './App.vue';
-import { $, el } from './ui/dom.js';
+import { $, el, imeKey } from './ui/dom.js';
 import { toast } from './ui/toast.js';
 import { closeDialog } from './ui/dialogs.js';
 import { closeAllMenus } from './ui/menu.js';
@@ -20,9 +20,9 @@ import { bindExternalLinks } from './platform/link.js';
 import { applyAccent, applyBg, loadBgImage } from './core/theme.js';
 import { pick } from './platform/open.js';
 import { aiClosePanel } from './ai.js';
-import { save, load } from './core/persist.js';
+import { save, flushSave, load, checkpoint, recovery } from './core/persist.js';
 import { cap, RT, CL } from './core/clusters.js';
-import { SAMPLE, state, ui, newLine, norm, normAll, redraw } from './core/state.js';
+import { SAMPLE, state, ui, newLine, norm, normAll, validSections, redraw } from './core/state.js';
 import { I18N, t, LOCALE, loadLocales } from './i18n/index.js';
 import { parseTxt, patTxt } from './core/txt.js';
 import { MIDI_KS, parseMidiFile, collectNoteOns, midiNotesToSections, keyswitchTrackIndices, stripKeyswitch, serializeTrack, serializeMidiFile } from './core/midi.js';
@@ -31,11 +31,19 @@ import { MIDI_KS, parseMidiFile, collectNoteOns, midiNotesToSections, keyswitchT
 
 /* ================= persistence ================= */
 /* ================= import / export ================= */
+// 整篇替换都先过这里 校验不过或备份写不进去就不换 当前稿原样保留
+function replaceWith(secs){
+  try{ secs = validSections(secs); }catch(e){ toast(t("toastInvalidProject")); return null; }
+  try{ checkpoint(); }catch(e){ toast(t("autosaveUnavailable")); return null; }
+  midiImport = null;
+  return secs;
+}
 function applyTxt(text){
-  const { title, secs } = parseTxt(text);
+  let { title, secs } = parseTxt(text);
   if(!secs.length){ toast(t("toastNoParse")); return; }
+  if(!(secs = replaceWith(secs))) return;
   if(title) state.title = title;
-  state.sections = secs; normAll(); redraw();
+  state.sections = secs; redraw();
   toast(t("toastImported", secs.length, secs.reduce((a,s)=>a+s.lines.length,0)));
 }
 /* 当前导入的 MIDI 原始结构，供后面「导出」用；只放在内存里，不进 state、
@@ -64,9 +72,10 @@ async function applyMidi(buf){
   // 一拍的秒数换算成 BPM，导出 LRC 时按拍微调偏移要用
   const bpm = 60 / (toSec(parsed.division || 480) - toSec(0));
   if(only){ useTiming("midi", times, bpm); return; }
+  if(!(secs = replaceWith(secs))) return;
   midiImport = {parsed, notes};
   ui.timing = { src: "midi", times, bpm };
-  state.sections = secs; normAll(); redraw();
+  state.sections = secs; redraw();
   toast(t("toastMidiImported", secs.length, secs.reduce((a,s)=>a+s.lines.length,0)));
 }
 
@@ -142,13 +151,19 @@ function buildLyricMidi(){
 }
 
 function applyJson(text){
-  try{ const o = JSON.parse(text);
-    if(!o.sections || !Array.isArray(o.sections)) throw 0;
-    state.title = o.title || t("untitled"); state.sections = o.sections;
-    if(o.exp) state.exp = {alts:!!o.exp.alts, note:!!o.exp.note};
-    normAll();
-    redraw(); toast(t("toastProjectOpened"));
-  }catch(e){ toast(t("toastInvalidProject")); }
+  let o, secs;
+  try{ o = JSON.parse(text); }catch(e){ toast(t("toastInvalidProject")); return; }
+  if(!o || !(secs = replaceWith(o.sections))) return;
+  state.title = typeof o.title === "string" && o.title ? o.title : t("untitled");
+  state.sections = secs;
+  if(o.exp) state.exp = {alts:!!o.exp.alts, note:!!o.exp.note};
+  redraw(); toast(t("toastProjectOpened"));
+}
+async function recoverProject(){
+  let s = null;
+  try{ s = recovery(); }catch(e){}
+  if(!s){ toast(t("toastNoRecovery")); return; }
+  if(await ask(t("confirmRecover"))) applyJson(s);
 }
 /* .svp 是 Synthesizer V 工程，一个音符一个音节、连音有标记，
    所以字数比 MIDI 准（MIDI 只能按音符数算，长音会多算）。
@@ -201,11 +216,13 @@ async function applySvp(text){
 
   const merged = svpMerge(picked.map(i => cooked[i].tr));
   if(only){ useTiming("svp", merged.times, svpBpm(j)); return; }
-  state.sections = merged.sections;
+  const secs = replaceWith(merged.sections);
+  if(!secs) return;
+  state.sections = secs;
   ui.timing = { src: "svp", times: merged.times, bpm: svpBpm(j) };
-  normAll(); redraw();
-  const lines = merged.sections.reduce((a,x)=>a+x.lines.length,0);
-  toast(t("toastSvpImported", merged.sections.length, lines));
+  redraw();
+  const lines = secs.reduce((a,x)=>a+x.lines.length,0);
+  toast(t("toastSvpImported", secs.length, lines));
 }
 
 /* 按文件名或内容自动判断是工程还是词格 */
@@ -280,8 +297,10 @@ function setCell(v){ state.cell = Math.max(28,Math.min(72,v)); document.document
    设置项跟着 state 走，图片本身单独存一个 localStorage 键。
    分开存是为了万一图片撑爆配额，歌词的自动保存不会跟着一起失败。 */
 async function newProject(){ if(!await ask(t("confirmNew"))) return;
-  state.title = t("untitled"); state.sections = JSON.parse(JSON.stringify(SAMPLE)); normAll(); redraw(); }
-addEventListener("keydown",e=>{ if(e.key === "Escape"){ closeDialog(); aiClosePanel(); closeAllMenus(); } });
+  const secs = replaceWith(JSON.parse(JSON.stringify(SAMPLE)));
+  if(!secs) return;
+  state.title = t("untitled"); state.sections = secs; redraw(); }
+addEventListener("keydown",e=>{ if(e.key === "Escape" && !imeKey(e)){ closeDialog(); aiClosePanel(); closeAllMenus(); } });
 function reflow(){
   let moved = 0;
   for(const sec of state.sections){
@@ -327,10 +346,17 @@ if(TAURI && !isMobile){
 // iOS 键盘弹起不缩 layout viewport 底部定位的东西会被盖住 自己算出被挡的高度
 if(isIOS && window.visualViewport){
   const vv = window.visualViewport;
-  const kb = () => document.documentElement.style.setProperty("--kb",
-    Math.max(0, innerHeight - vv.height - vv.offsetTop) + "px");
+  const kb = () => {
+    const h = Math.max(0, innerHeight - vv.height - vv.offsetTop);
+    document.documentElement.style.setProperty("--kb", h + "px");
+    // 只看高度会把缩放算成键盘 还得有输入框在聚焦
+    const typing = /^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName);
+    document.documentElement.classList.toggle("kb-open", typing && h > 150);
+  };
   vv.addEventListener("resize", kb);
   vv.addEventListener("scroll", kb);
+  document.addEventListener("focusin", kb);
+  document.addEventListener("focusout", () => requestAnimationFrame(kb));
 }
 
 // 桌面客户端才有窗口按钮 顶栏要给它预留内边距
@@ -348,6 +374,10 @@ addEventListener("keydown", e => {
     if(!el || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) e.preventDefault();
   }
 });
+
+// iOS 切后台后随时可能被杀 400ms 的防抖等不到
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState === "hidden") flushSave(); });
+addEventListener("pagehide",flushSave);
 
 initTips();
 bindExternalLinks();
@@ -377,7 +407,7 @@ async function boot(){
   });
 
   createApp(App, {
-    onNew: newProject, onOpenProj: ()=>openText("json"), onSaveProj: expProj,
+    onNew: newProject, onRecover: recoverProject, onOpenProj: ()=>openText("json"), onSaveProj: expProj,
     onImpTxt: ()=>{ timingOnly = false; openText("txt"); },
     onImpMidi: ()=>{ timingOnly = false; openMidi(); },
     onImpSvp: ()=>{ timingOnly = false; openText("svp"); },

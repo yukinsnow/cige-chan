@@ -1,5 +1,5 @@
 import { reactive } from 'vue';
-import { state, redraw } from './core/state.js';
+import { state, ui, repaint } from './core/state.js';
 import { cap, CL, RT } from './core/clusters.js';
 import { t, LOCALE } from './i18n/index.js';
 import { save } from './core/persist.js';
@@ -257,6 +257,13 @@ function aiStop(){
   aiSetProgress(aiUi.done, aiUi.total, t("aiStopping"));
 }
 
+/* 请求在路上时用户可能改了这句、增删了行或整篇换掉 这些情况下 AI 的结果作废
+   按位置取回再比内容 不比对象身份 state 是 proxy 身份比较靠不住 */
+function aiSameLine(si, li, before){
+  const L = state.sections[si]?.lines[li];
+  return !ui.composing && L && before !== undefined && JSON.stringify(L) === before ? L : null;
+}
+
 async function aiRunAll(mode){
   if(aiUi.busy) return;
   if(!aiNormBase(aiCfg.baseUrl) || !aiCfg.apiKey || !aiCfg.model){
@@ -282,8 +289,12 @@ async function aiRunAll(mode){
         if(aiAbort.cancelled){ stopped = true; break; }
         aiSetProgress(aiUi.done, aiUi.total, t("aiProgress", item.si + 1, item.li + 1));
         try{
+          const before = JSON.stringify(item.L);
           const r = await aiFillLine(item.sec, item.L, { signal });
-          aiApplyLineText(item.L, r.text);
+          if(aiAbort.cancelled){ stopped = true; break; }
+          const L = aiSameLine(item.si, item.li, before);
+          if(!L){ skip++; aiUi.done++; continue; }
+          aiApplyLineText(L, r.text);
           if(r.note) notes.push(t("aiNoteLine", item.si + 1, item.li + 1) + " " + r.note);
           ok++;
         }catch(e){
@@ -292,7 +303,7 @@ async function aiRunAll(mode){
           notes.push(t("aiNoteLine", item.si + 1, item.li + 1) + " " + t("aiSkipFail", e.message));
         }
         aiUi.done++;
-        redraw();
+        repaint();
       }
     }else{
       /* 检查/润色：整首一起交给 AI 审，返回逐句建议，逐句本地校验后才采用 */
@@ -307,6 +318,7 @@ async function aiRunAll(mode){
             "\n输出 JSON：{\"suggestions\":[{\"sec\":段落序号(从1起),\"line\":句序号(段内从1起),\"text\":\"替换文本(分句间用空格分隔)\",\"why\":\"一句话理由\"}]}。" +
             "\n没有值得改的就返回 {\"suggestions\":[]}。" }
       ];
+      const before = new Map(scopeLines.map(x => [x.si + ":" + x.li, JSON.stringify(x.L)]));
       const raw = await aiChat(messages, { signal });
       let j;
       try{ j = aiParseJson(raw); }
@@ -321,6 +333,7 @@ async function aiRunAll(mode){
         const L = sec && sec.lines[(s.line | 0) - 1];
         if(!L) continue;
         if(scopeSi !== null && (s.sec | 0) - 1 !== scopeSi) continue;   // 范围外建议直接忽略，不计失败
+        if(!aiSameLine((s.sec | 0) - 1, (s.line | 0) - 1, before.get(((s.sec | 0) - 1) + ":" + ((s.line | 0) - 1)))){ skip++; continue; }
         const chk = aiCheckFill(s.text, L.g);
         if(chk !== null){ skip++; notes.push(t("aiNoteLine", s.sec, s.line) + " " + t("aiSkipFail", chk)); continue; }
         const oldText = RT(L.t) || t("versionEmpty");
@@ -328,7 +341,6 @@ async function aiRunAll(mode){
         if(s.why) notes.push(t("aiNoteLine", s.sec, s.line) + " " + oldText + " → " + RT(L.t) + "（" + s.why + "）");
         ok++;
       }
-      redraw();
     }
   }catch(e){
     if(e.aiAborted) stopped = true;
@@ -336,7 +348,7 @@ async function aiRunAll(mode){
   }finally{
     aiAbort = null;
     aiSetBusy(false);
-    redraw();
+    repaint();
     const secs = ((Date.now() - startedAt) / 1000).toFixed(1);
     let summary;
     if(stopped) summary = t("aiDoneStopped", ok, skip, secs);

@@ -22,7 +22,7 @@ import IosNotice from './components/IosNotice.vue';
 import { isDesktopApp } from './platform/env.js';
 
 defineProps({
-  onNew: Function, onOpenProj: Function, onSaveProj: Function,
+  onNew: Function, onRecover: Function, onOpenProj: Function, onSaveProj: Function,
   onImpTxt: Function, onImpMidi: Function, onImpSvp: Function,
   onExpPat: Function, onExpMidiClean: Function, onExpMidiLyr: Function,
   onReflow: Function, onCell: Function, onReadTiming: Function,
@@ -33,7 +33,7 @@ defineProps({
   <WindowControls v-if="isDesktopApp" />
   <header>
     <TitleStrip />
-    <Toolbar :on-new="onNew" :on-open-proj="onOpenProj" :on-save-proj="onSaveProj"
+    <Toolbar :on-new="onNew" :on-recover="onRecover" :on-open-proj="onOpenProj" :on-save-proj="onSaveProj"
              :on-imp-txt="onImpTxt" :on-imp-midi="onImpMidi" :on-imp-svp="onImpSvp"
              :on-exp-pat="onExpPat" :on-exp-midi-clean="onExpMidiClean"
              :on-exp-midi-lyr="onExpMidiLyr" :on-reflow="onReflow" :on-cell="onCell" />

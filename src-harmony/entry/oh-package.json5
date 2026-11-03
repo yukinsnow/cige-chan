@@ -1,0 +1,7 @@
+{
+  "modelVersion": "5.0.0",
+  "name": "entry",
+  "version": "2.0.3",
+  "description": "CigeChan HarmonyOS native host",
+  "dependencies": {}
+}
