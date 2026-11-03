@@ -5,6 +5,7 @@ import { Pencil } from 'lucide';
 import { state } from '../core/state.js';
 import { t } from '../i18n/index.js';
 import { save } from '../core/persist.js';
+import { imeKey } from '../ui/dom.js';
 
 const editing = ref(false);
 const draft = ref('');
@@ -36,7 +37,8 @@ const icon = import.meta.env.BASE_URL + 'logo.png';
     <span class="titlebox">
       <span class="tghost" aria-hidden="true">{{ shown }}</span>
       <input v-if="editing" id="title" ref="box" v-model="draft" spellcheck="false"
-             @keydown.enter.prevent="commit" @keydown.esc.prevent="editing = false" @blur="commit">
+             @keydown.enter="e => { if (!imeKey(e)) { e.preventDefault(); commit(); } }"
+             @keydown.esc="e => { if (!imeKey(e)) { e.preventDefault(); editing = false; } }" @blur="commit">
       <span v-else class="songtitle" :data-tip="state.title">{{ state.title }}</span>
     </span>
     <button class="titleedit" :class="{ hide: editing }" :data-tip="t('titleEdit')" @click="startEdit">

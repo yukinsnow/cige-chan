@@ -6,7 +6,7 @@ import { parseGroups } from '../core/txt.js';
 import { ready as aidReady, pz, pzAmbig, rhymeName, tailChar, rhymeSlots } from '../core/rhyme.js';
 import { t } from '../i18n/index.js';
 import { save } from '../core/persist.js';
-import { $, el } from '../ui/dom.js';
+import { $, el, imeKey as rawImeKey } from '../ui/dom.js';
 import { toast } from '../ui/toast.js';
 import { ask } from '../ui/confirm.js';
 import { askBreak } from '../ui/brk.js';
@@ -16,6 +16,7 @@ import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Copy, X, Minus, Plus, Split,
 
 let focusRef = null;      // {si,li,pos}
 let composing = false;
+const imeKey = e => composing || rawImeKey(e);
 
 const esc = s => String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
@@ -30,6 +31,8 @@ function plainInput(cls){
 
 /* ================= render ================= */
 function render(){
+  // 旧 input 拔掉后收不到 compositionend 不清的话 AI 会以为一直在选词
+  composing = ui.composing = false;
   const doc = $("#doc"); doc.innerHTML = "";
   state.sections.forEach((sec,si)=>{
     const S = el("div","sec"); S.dataset.si = si;
@@ -68,7 +71,7 @@ function render(){
 }
 
 function btn(icon,title,fn){
-  const b = el("button"); b.dataset.tip = title; b.onclick = fn;
+  const b = el("button"); b.dataset.tip = title; b.setAttribute("aria-label",title); b.onclick = fn;
   if(typeof icon === "string") b.textContent = icon; else b.appendChild(iconEl(icon));
   return b;
 }
@@ -169,14 +172,14 @@ function rowEl(sec,si,L,li){
   nt.value = L.note; nt.placeholder = t("notePlaceholder");
   nt.oninput = ()=>{ L.note = nt.value; R.classList.toggle("hasx", !!(L.alts.length || L.note)); save(); };
   // 备注框放在版本条后面，这样重建版本条不会打断正在输入的备注
-  nt.onkeydown = e=>{ if(e.key === "Enter" || e.key === "Escape"){ e.preventDefault(); io.focus(); } };
+  nt.onkeydown = e=>{ if(imeKey(e)) return; if(e.key === "Enter" || e.key === "Escape"){ e.preventDefault(); io.focus(); } };
   ex.appendChild(nt);
   R.appendChild(ex);
 
   /* ---- events ---- */
-  io.addEventListener("compositionstart",()=>{ composing = true; });
+  io.addEventListener("compositionstart",()=>{ composing = ui.composing = true; });
   io.addEventListener("compositionupdate",e=>{ showComp(R,comp,io,e.data); });
-  io.addEventListener("compositionend",()=>{ composing = false; comp.style.display="none"; onInput(); });
+  io.addEventListener("compositionend",()=>{ composing = ui.composing = false; comp.style.display="none"; onInput(); });
   io.addEventListener("input",()=>{ if(composing){ return; } onInput(); });
 
   function onInput(){
@@ -274,6 +277,7 @@ function rowEl(sec,si,L,li){
   R._seek = seek;
 
   io.addEventListener("keydown",e=>{
+    if(imeKey(e)) return;
     const mod = e.metaKey || e.ctrlKey;
     const p = charToCell(CL(io.value), io.selectionStart);   // 当前光标所在格子下标
     if(mod && e.key === "]"){ e.preventDefault(); chg(L,1,p);  redrawRow(si,li,p); return; }
@@ -511,6 +515,22 @@ function restoreFocus(){
   io.focus(); io.setSelectionRange(charPos,charPos); R._mark(io.selectionStart);   // 读回真实光标
 }
 
+function repaintRows(){
+  document.querySelectorAll("#doc .row").forEach(R=>{
+    const L = state.sections[+R.dataset.si]?.lines[+R.dataset.li];
+    if(!L) return;
+    const io = R.querySelector(".io");
+    if(composing && document.activeElement === io) return;
+    if(io.value !== L.t){
+      const { selectionStart:a, selectionEnd:b, selectionDirection:d } = io;
+      io.value = L.t;
+      if(document.activeElement === io){ io.setSelectionRange(a,b,d); R._mark(io.selectionStart); }
+    }
+    paint(R,L); R._vers();
+  });
+  save();
+}
+
 function moveSec(si,d){
   const j = si+d; if(j<0 || j>=state.sections.length) return;
   state.sections.splice(j,0,state.sections.splice(si,1)[0]); focusRef=null; render();
@@ -524,13 +544,14 @@ function editPattern(pat,L){
   const commit = ok=>{ if(done) return; done = true;
     if(ok){ const g = parseGroups(inp.value); if(g) L.g = g; }
     focusRef = null; render(); };
-  inp.onkeydown = e=>{ if(e.key === "Enter"){ e.preventDefault(); commit(true); } if(e.key === "Escape") commit(false); };
+  inp.onkeydown = e=>{ if(imeKey(e)) return; if(e.key === "Enter"){ e.preventDefault(); commit(true); } if(e.key === "Escape") commit(false); };
   inp.onblur = ()=>commit(true);
 }
 
 // 命令式渲染的词格逐字搬进来 用 ref 直接操作 DOM 不改写成模板
 // 外部改了整篇（导入 / AI 填词 / 切语言）就 redraw() 递增 ui.rev 触发重画
 watch(() => ui.rev, render);
+watch(() => ui.repaint, repaintRows);
 onMounted(render);
 
 defineExpose({ render, redrawRow, restoreFocus, step, moveSec });

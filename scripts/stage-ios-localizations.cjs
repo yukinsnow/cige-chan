@@ -1,0 +1,12 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const root = path.resolve(__dirname, '..');
+const apple = path.join(root, 'src-tauri/gen/apple');
+const project = fs.readFileSync(path.join(apple, 'project.yml'), 'utf8');
+const match = project.match(/path: ([^\r\n]+_iOS)\r?\n/);
+assert.ok(match, 'Missing iOS target source directory');
+const target = path.join(apple, match[1].trim());
+assert.ok(fs.statSync(target).isDirectory());
+fs.cpSync(path.join(root, 'src-tauri/ios-localizations'), target, {recursive:true});
+console.log('Staged localized iOS app names');
