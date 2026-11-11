@@ -139,6 +139,7 @@
   },
   "dropText": "鬆手即可匯入 .txt / .json，或把圖片拖進來當背景",
   "confirmDeleteSec": "刪除段落「{0}」？",
+  "confirmDeleteLine": "刪除這一句？它的備選寫法和備註也會一起刪掉。",
   "confirmNew": "新建會清空當前內容，繼續？",
   "confirmRecover": "復原上次匯入、開啟或新建之前的工程？當前內容會存為新的備份，可以再換回來。",
   "confirmMidiNoKs": "這份 MIDI 沒有按 keyswitch 規範分段（C0 分句／C#0 換句／D0 換段），{0} 個音符會全部擠進一句，匯入後需要自己動手分句、分段。\n\n如果作曲用的是 Synthesizer V，改用「匯入 SV 專案」會準得多——.svp 裡連音有標記，字數不會多算。\n\n仍要匯入這份 MIDI 嗎？",
@@ -373,5 +374,6 @@
   "lrcSrcsvp": "SV 工程",
   "lrcReadSvp": "讀 SV 工程",
   "lrcReadMidi": "讀 MIDI",
-  "toastTimingRead": "已讀到 {0} 個時間點，詞格未改動"
+  "toastTimingRead": "已讀到 {0} 個時間點，詞格未改動",
+  "toastTimingNeedsMelody": "讀時間軸要選 SV 工程或 MIDI，歌詞檔案裡沒有時間"
 }

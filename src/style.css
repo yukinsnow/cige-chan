@@ -323,7 +323,7 @@ main{overflow:auto;overscroll-behavior:contain;background:var(--bg);
 .prev b{color:var(--accent);font-weight:600}
 .lrcsrc{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px;padding:10px 12px;border-radius:11px;background:var(--sunk);border:1px solid var(--line);font-size:12.5px;color:var(--dim)}
 .lrcsrc.has{background:var(--accent-soft);border-color:transparent;color:var(--fg)}
-.lrcbtns{display:inline-flex;gap:7px}
+.lrcbtns{display:inline-flex;flex-wrap:wrap;gap:7px}
 .lrcbtns button{font-size:12px;padding:5px 10px}
 .tools{flex:none;display:flex;gap:3px;opacity:0;transition:.15s}
 .row:hover .tools,.row:focus-within .tools{opacity:1}

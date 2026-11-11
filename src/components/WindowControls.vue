@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { isMac, winMinimize, winToggleMax, winClose, winIsMax, winResize } from '../platform/env.js';
+import { flushSave } from '../core/persist.js';
 import { t } from '../i18n/index.js';
 
 const maxed = ref(false);
@@ -25,7 +26,7 @@ const EDGES = ['North', 'South', 'East', 'West', 'NorthWest', 'NorthEast', 'Sout
         <rect x="0.5" y="0.5" width="9" height="9" rx="1.5" />
       </svg>
     </button>
-    <button class="w-close" :data-tip="t('winClose')" @click="winClose">
+    <button class="w-close" :data-tip="t('winClose')" @click="flushSave(); winClose()">
       <svg viewBox="0 0 10 10" aria-hidden="true"><path d="M0.5 0.5l9 9M9.5 0.5l-9 9" /></svg>
     </button>
   </div>

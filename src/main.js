@@ -225,9 +225,17 @@ async function applySvp(text){
   toast(t("toastSvpImported", secs.length, lines));
 }
 
+// 安卓和鸿蒙拿不到文件名只能看内容 svp 的 tracks 排在 library 后面 光看开头会漏
+function isSvp(name, text){
+  if(/\.svp$/i.test(name || "")) return true;
+  if(!/^\s*\{/.test(text)) return false;
+  try{ return Array.isArray(parseSvp(text).tracks); }catch(e){ return false; }
+}
 /* 按文件名或内容自动判断是工程还是词格 */
 function applyText(name, text){
-  if(/\.svp$/i.test(name || "") || /"tracks"\s*:/.test(text.slice(0, 400))) applySvp(text);
+  if(isSvp(name, text)) applySvp(text);
+  // 只读时间轴却选了歌词文件 照常导入会把整篇换掉
+  else if(timingOnly){ timingOnly = false; toast(t("toastTimingNeedsMelody")); }
   else if(/\.json$/i.test(name || "") || /^\s*\{/.test(text)) applyJson(text);
   else applyTxt(text);
 }
@@ -247,7 +255,8 @@ async function openText(kind){
         ? {filterName:t("dlgFilterProject"), exts:["json"]}
         : {filterName:t("dlgFilterLyricsPattern"), exts:["txt","md","svp"]});
       if(r) applyText(r.name, r.contents);
-    }catch(e){ toast(t("toastOpenFail", e)); }
+      else timingOnly = false;
+    }catch(e){ timingOnly = false; toast(t("toastOpenFail", e)); }
     return;
   }
   pick(kind === "json" ? ".json" : ".txt,.md,.svp");
@@ -260,7 +269,8 @@ async function openMidi(){
     try{
       const bytes = await TAURI.core.invoke("open_binary", {filterName:t("dlgFilterMidi"), exts:["mid","midi"]});
       if(bytes) applyMidi(new Uint8Array(bytes).buffer);
-    }catch(e){ toast(t("toastOpenFail", e)); }
+      else timingOnly = false;
+    }catch(e){ timingOnly = false; toast(t("toastOpenFail", e)); }
     return;
   }
   const f = $("#filemidi"); f.value = ""; f.click();
@@ -325,6 +335,7 @@ if(matchMedia("(pointer:fine)").matches){
   addEventListener("dragover",e=>e.preventDefault());
   addEventListener("dragleave",()=>{ if(--dc <= 0){ dc = 0; ui.dragging = false; } });
   addEventListener("drop",e=>{ e.preventDefault(); dc = 0; ui.dragging = false;
+    timingOnly = false;
     const f = e.dataTransfer.files[0]; if(f) readFile(f); });
 }
 

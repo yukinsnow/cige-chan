@@ -3,7 +3,6 @@ import { state, ui, repaint } from './core/state.js';
 import { cap, CL, RT } from './core/clusters.js';
 import { t, LOCALE } from './i18n/index.js';
 import { save } from './core/persist.js';
-import { $, el } from './ui/dom.js';
 import { toast } from './ui/toast.js';
 import { ask } from './ui/confirm.js';
 

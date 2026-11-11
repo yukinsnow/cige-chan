@@ -117,7 +117,9 @@ function rowEl(sec,si,L,li){
     const blocked = shiftLine(L,1); if(blocked){ toast(blocked); return; }
     redrawRow(si,li,Math.min(curPos+1,cap(L))); }));
   tools.appendChild(btn(Copy,t("rowDupTitle"),()=>{ sec.lines.splice(li+1,0,newLine(L.g)); focusRef={si,li:li+1,pos:0}; render(); }));
-  tools.appendChild(btn(X,t("rowDelTitle"),()=>{ sec.lines.splice(li,1); if(!sec.lines.length) sec.lines.push(newLine()); focusRef={si,li:Math.max(0,li-1),pos:0}; render(); }));
+  tools.appendChild(btn(X,t("rowDelTitle"),async ()=>{
+    if(hasContent(L) && !await ask(t("confirmDeleteLine"))) return;
+    sec.lines.splice(li,1); if(!sec.lines.length) sec.lines.push(newLine()); focusRef={si,li:Math.max(0,li-1),pos:0}; render(); }));
   R.appendChild(tools);
 
   /* ---- 备选版本 + 备注 ---- */
@@ -300,7 +302,7 @@ function rowEl(sec,si,L,li){
     if(e.key === "Tab"){ e.preventDefault(); step(si,li,e.shiftKey?-1:1,0); return; }
     if(e.key === "ArrowUp"){ e.preventDefault(); step(si,li,-1,p); return; }
     if(e.key === "ArrowDown"){ e.preventDefault(); step(si,li,1,p); return; }
-    if(e.key === "Backspace" && !RT(L.t) && io.selectionStart === 0){
+    if(e.key === "Backspace" && !hasContent(L) && io.selectionStart === 0){
       e.preventDefault();
       if(sec.lines.length > 1){ sec.lines.splice(li,1); focusRef={si,li:Math.max(0,li-1),pos:9999}; render(); }
       else step(si,li,-1,9999);
@@ -418,6 +420,8 @@ function paintSel(R){
 }
 
 function redrawRow(si,li,pos){
+  // 跟 render 一样 换掉的 input 收不到 compositionend iOS 上点按钮不会先失焦
+  composing = ui.composing = false;
   const R = document.querySelector('.row[data-si="'+si+'"][data-li="'+li+'"]');
   const L = state.sections[si].lines[li];
   const io = R.querySelector(".io");
@@ -514,6 +518,9 @@ function restoreFocus(){
   const charPos = cellToChar(clusters, p);
   io.focus(); io.setSelectionRange(charPos,charPos); R._mark(io.selectionStart);   // 读回真实光标
 }
+
+// 当前写法清空了 备选和备注还在 退格不能顺手把整句删掉
+const hasContent = L => !!(RT(L.t) || L.alts.length || L.note);
 
 function repaintRows(){
   document.querySelectorAll("#doc .row").forEach(R=>{
