@@ -62,11 +62,8 @@ jobs:
       - run: npm install
       - name: Initialize iOS project
         run: npx tauri ios init --ci --skip-targets-install
-      - name: Stage app icons and localized names
-        run: |
-          npm run ios:stage
-          cd src-tauri/gen/apple
-          xcodegen generate
+      - name: Stage app icons, localized names and project fixes
+        run: npm run ios:stage
       - name: Build iOS app
         env:
           IOS_TARGET: ${{ inputs.ios_target || 'simulator' }}

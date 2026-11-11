@@ -14,7 +14,7 @@
     "build": "tauri build",
     "gen:rhyme": "node scripts/gen-rhyme.mjs",
     "ios:icons": "node scripts/ios-icons.mjs",
-    "ios:stage": "node scripts/stage-ios-icons.cjs && node scripts/stage-ios-localizations.cjs"
+    "ios:stage": "node scripts/stage-ios-icons.cjs && node scripts/stage-ios-localizations.cjs && node scripts/patch-ios-project.cjs"
   },
   "dependencies": {
     "lucide": "^1.41.0",

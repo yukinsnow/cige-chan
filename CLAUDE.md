@@ -133,7 +133,7 @@ npm run dev        Tauri
 npm test           文本往返 + 押韵分组
 npm run gen:rhyme  重新生成 public/rhyme.json
 npm run ios:icons  去掉 icons/ios/ 里每张图的 alpha（npx tauri icon 之后跑）
-npm run ios:stage  图标和本地化名拷进 gen/apple（tauri ios init 之后跑）
+npm run ios:stage  图标、本地化名拷进 gen/apple，修 project.yml 再 xcodegen（tauri ios init 之后跑）
 npm run build:web
 ```
 
@@ -149,5 +149,6 @@ iOS 的 AppIcon 不许带 alpha，App Store 校验会以 ITMS-90717 退回来。
 npm run ios:icons。Xcode 实际打包用的是 gen/apple 里的 AppIcon.appiconset，
 tauri ios init 只放默认图标，必须再跑 npm run ios:stage，否则包里一直是 tauri 默认图标。
 gen/ 不进仓库，ios:stage 每次 init 后都要跑，CI 里也是这么做的。
+project.yml 的最低版本和 Externals 排除 .a 也是 ios:stage 补的，别直接手改 gen/ 里的文件，下次 init 就没了。
 主屏幕显示名在 src-tauri/Info.ios.plist，不跟 productName 走
 （productName 是构建产物的名字，不能带非 ASCII）。
